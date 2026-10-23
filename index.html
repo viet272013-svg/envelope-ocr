@@ -55,7 +55,6 @@
         <!-- TAB 1: APP / SCAN & EDIT -->
         <div id="tabApp" class="space-y-6">
             
-            <!-- Main Interactive Area: Upload + Edit Form -->
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
                 <!-- Left Side: Image Upload & OCR Action (5 Cols) -->
@@ -65,53 +64,47 @@
                             <i class="fa-solid fa-image text-indigo-600"></i> Ảnh bì thư người nhận
                         </h2>
 
-<!-- Drag & Drop Zone & Camera Capture -->
-<div id="dropZone" class="border-2 border-dashed border-indigo-200 hover:border-indigo-400 bg-indigo-50/50 rounded-xl p-4 text-center transition-all relative overflow-hidden group min-h-[240px] flex flex-col justify-center items-center">
-    
-    <!-- Input chọn ảnh từ thư viện/máy tính -->
-    <input type="file" id="imageInput" accept="image/*" onchange="handleFileSelect(event)" style="display:none;">
-    
-    <!-- Input mở trực tiếp camera điện thoại -->
-    <input type="file" id="cameraInput" accept="image/*" capture="environment" onchange="handleFileSelect(event)" style="display:none;">
-    
-    <!-- Image Preview -->
-    <img id="imagePreview" src="" alt="Bì thư preview" class="hidden max-h-64 rounded-lg object-contain shadow-md mb-2">
+                        <!-- Khung xem trước ảnh và điều khiển chọn/chụp ảnh -->
+                        <div class="border-2 border-dashed border-indigo-200 bg-indigo-50/50 rounded-xl p-3 text-center relative overflow-hidden flex flex-col justify-center items-center">
+                            
+                            <!-- Input ẩn nhận file từ máy tính và camera -->
+                            <input type="file" id="imageInput" accept="image/*" onchange="handleFileSelect(event)" style="display:none;">
+                            <input type="file" id="cameraInput" accept="image/*" capture="environment" onchange="handleFileSelect(event)" style="display:none;">
 
-    <!-- Default Upload & Capture UI -->
-    <div id="uploadPlaceholder" class="space-y-3 p-4 w-full">
-        <div class="w-14 h-14 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto text-2xl group-hover:scale-110 transition-transform">
-            <i class="fa-solid fa-camera-retro"></i>
-        </div>
-        <div>
-            <p class="text-sm font-medium text-slate-700">Chụp ảnh bì thư hoặc tải lên</p>
-            <p class="text-xs text-slate-400 mt-1">Hỗ trợ điện thoại và máy tính</p>
-        </div>
-        
-        <!-- Nút bấm chọn nhanh giữa Chụp ảnh & Tải tệp -->
-        <div class="flex gap-2 justify-center pt-2">
-            <button type="button" onclick="document.getElementById('cameraInput').click()" class="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow transition flex items-center gap-1.5 cursor-pointer">
-                <i class="fa-solid fa-camera"></i> Chụp ảnh
-            </button>
-            <button type="button" onclick="document.getElementById('imageInput').click()" class="px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer">
-                <i class="fa-solid fa-folder-open"></i> Thư viện
-            </button>
-        </div>
-    </div>
-</div>
+                            <!-- Thẻ hiển thị ảnh xem trước -->
+                            <img id="imagePreview" src="" alt="Bì thư preview" class="max-h-72 rounded-lg object-contain shadow-md mb-2 hidden" />
 
-<!-- Action Buttons: Nút chụp ảnh mới bên dưới -->
-<div class="grid grid-cols-2 gap-3">
-    <button type="button" onclick="document.getElementById('cameraInput').click()" class="w-full py-2.5 px-4 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl text-sm font-medium transition flex items-center justify-center gap-2 cursor-pointer">
-        <i class="fa-solid fa-camera"></i> Chụp ảnh mới
-    </button>
-    <button type="button" id="btnExtract" onclick="processOCR()" class="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold shadow-md shadow-indigo-200 transition flex items-center justify-center gap-2">
-        <i class="fa-solid fa-wand-magic-sparkles"></i> Nhận diện AI
-    </button>
-</div>
+                            <!-- Giao diện hướng dẫn ban đầu -->
+                            <div id="uploadPlaceholder" class="space-y-3 py-6 w-full">
+                                <div class="w-14 h-14 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto text-2xl">
+                                    <i class="fa-solid fa-camera-retro"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-slate-700">Chụp ảnh bì thư hoặc tải lên</p>
+                                    <p class="text-xs text-slate-400 mt-1">Hỗ trợ điện thoại và máy tính</p>
+                                </div>
+                            </div>
+
+                            <!-- Nút chọn nhanh luôn hiển thị dưới khung -->
+                            <div class="flex gap-2 justify-center w-full pt-2 border-t border-slate-200/60">
+                                <button type="button" onclick="document.getElementById('cameraInput').click()" class="flex-1 py-2 px-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow transition flex items-center justify-center gap-1.5 cursor-pointer">
+                                    <i class="fa-solid fa-camera"></i> Chụp ảnh mới
+                                </button>
+                                <button type="button" onclick="document.getElementById('imageInput').click()" class="flex-1 py-2 px-3 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1.5 cursor-pointer">
+                                    <i class="fa-solid fa-folder-open"></i> Thư viện máy
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons: Nhận diện AI thủ công -->
+                        <button type="button" id="btnExtract" onclick="processOCR()" class="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold shadow-md shadow-indigo-200 transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> Nhận diện AI lại
+                        </button>
+
                         <!-- Sample Data Button -->
                         <div class="pt-2 border-t border-slate-100">
                             <button type="button" onclick="loadSampleData()" class="w-full py-2 px-3 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg text-xs font-medium border border-amber-200 transition flex items-center justify-center gap-2">
-                                <i class="fa-solid fa-bolt"></i> Nạp mẫu bì thư mẫu (Nguyễn Minh Nguyệt)
+                                <i class="fa-solid fa-bolt"></i> Nạp mẫu bì thư chuẩn (Nguyễn Minh Nguyệt)
                             </button>
                         </div>
                     </div>
@@ -234,7 +227,7 @@
                     <li>Xóa toàn bộ mã mặc định và dán đoạn mã bên dưới vào.</li>
                     <li>Nhấn nút <b>Triển khai (Deploy)</b> &gt; <b>Triển khai dưới dạng ứng dụng web (New deployment)</b>.</li>
                     <li>Chọn **Ai cũng có quyền truy cập (Anyone)** ở mục "Who has access".</li>
-                    <li>Sao chép **Web App URL** thu được và dán vào ô **Google Apps Script Web App URL** ở phần cấu hình ứng dụng web này.</li>
+                    <li>Sao chép **Web App URL** thu được và dán vào file source code này.</li>
                 </ol>
 
                 <div class="relative">
@@ -298,28 +291,11 @@ function doGet(e) {
         };
 
         let currentBase64Image = null;
+        
+        // 👉 ĐÃ CỐ ĐỊNH URL GOOGLE SHEETS CỦA BẠN TẠI ĐÂY
         const DEFAULT_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyS9lBJMVnci4t10iKYhpZ6tFMCQOynU4xccQBPcEfKiWWg1BI4gbSEm1t7ZBAbXyLn/exec";
 
         window.onload = function() {
-            const savedUrl = localStorage.getItem("script_url");
-            // Nếu bạn có ô input scriptUrl ngầm, đoạn này sẽ tự điền, nếu không có thể bỏ qua
-            const urlInput = document.getElementById("scriptUrl");
-            if(urlInput) {
-                urlInput.value = savedUrl || DEFAULT_SCRIPT_URL;
-                urlInput.addEventListener("input", (e) => {
-                    localStorage.setItem("script_url", e.target.value.trim());
-                });
-            }
-
-            const savedKey = localStorage.getItem("gemini_key");
-            const keyInput = document.getElementById("geminiApiKey");
-            if(keyInput && savedKey) {
-                keyInput.value = savedKey;
-                keyInput.addEventListener("input", (e) => {
-                    localStorage.setItem("gemini_key", e.target.value.trim());
-                });
-            }
-
             renderHistory();
         };
 
@@ -345,7 +321,7 @@ function doGet(e) {
             }
         }
 
-        // Xử lý chung khi chọn file ảnh hoặc chụp ảnh xong -> Tự động gọi OCR
+        // Xử lý khi chọn ảnh hoặc chụp ảnh xong -> Hiển thị ảnh và tự động gọi OCR
         function handleFileSelect(event) {
             const file = event.target.files[0];
             if (file) {
@@ -355,7 +331,7 @@ function doGet(e) {
                     showImagePreview(currentBase64Image);
                     showToast("Đã tải ảnh lên, đang tự động nhận diện...", "info");
                     
-                    // Tự động kích hoạt nhận diện AI sau khi load ảnh xong
+                    // Tự động kích hoạt nhận diện AI
                     processOCR();
                 };
                 reader.readAsDataURL(file);
@@ -365,9 +341,12 @@ function doGet(e) {
         function showImagePreview(src) {
             const imgPreview = document.getElementById("imagePreview");
             const uploadPlaceholder = document.getElementById("uploadPlaceholder");
+            
             imgPreview.src = src;
-            imgPreview.classList.remove("hidden");
-            uploadPlaceholder.classList.add("hidden");
+            imgPreview.classList.remove("hidden"); // Hiện ảnh xem trước
+            if(uploadPlaceholder) {
+                uploadPlaceholder.style.display = "none"; // Ẩn hướng dẫn ban đầu
+            }
         }
 
         function loadSampleData() {
@@ -390,8 +369,8 @@ function doGet(e) {
                 return;
             }
 
-            const apiKeyInput = document.getElementById("geminiApiKey");
-            const apiKey = apiKeyInput ? apiKeyInput.value.trim() : "";
+            // Lấy API key từ bộ nhớ hoặc để trống (dùng mẫu giả lập nếu không có key)
+            const apiKey = localStorage.getItem("gemini_key") || "";
             const btnExtract = document.getElementById("btnExtract");
             const status = document.getElementById("ocrStatus");
 
@@ -441,18 +420,18 @@ function doGet(e) {
                     loadSampleData();
                 }
             } else {
+                // Nếu chưa cấu hình API Key, tự động nạp mẫu chuẩn từ ảnh mẫu đã kiểm chứng
                 setTimeout(() => {
                     loadSampleData();
-                }, 800);
+                }, 600);
             }
 
             btnExtract.disabled = false;
-            btnExtract.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i> Nhận diện AI`;
+            btnExtract.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i> Nhận diện AI lại`;
         }
 
         async function submitToGoogleSheets() {
-            const scriptUrlInput = document.getElementById("scriptUrl");
-            const scriptUrl = scriptUrlInput ? scriptUrlInput.value.trim() : DEFAULT_SCRIPT_URL;
+            const scriptUrl = DEFAULT_SCRIPT_URL;
 
             const name = document.getElementById("recipientName").value.trim();
             const dob = document.getElementById("recipientDob").value.trim();
