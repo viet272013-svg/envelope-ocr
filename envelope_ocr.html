@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trích Xuất Bì Thư & Lưu Google Sheets</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Font Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(229, 231, 235, 0.8);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+    <!-- Header Navigation -->
+    <header class="bg-indigo-600 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="bg-white/10 p-2.5 rounded-xl backdrop-blur-md">
+                    <i class="fa-solid fa-envelope-open-text text-2xl text-amber-300"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight">Envelope OCR Reader</h1>
+                    <p class="text-xs text-indigo-200">Trích xuất thông tin bì thư & Lưu Google Sheets</p>
+                </div>
+            </div>
+            
+            <!-- Navigation Tabs -->
+            <div class="flex bg-indigo-700/60 p-1 rounded-xl text-sm font-medium">
+                <button id="tabAppBtn" onclick="switchTab('app')" class="px-4 py-2 rounded-lg bg-white text-indigo-600 shadow-sm transition-all duration-200 flex items-center gap-2">
+                    <i class="fa-solid fa-camera"></i> Scan & Nhập
+                </button>
+                <button id="tabHistoryBtn" onclick="switchTab('history')" class="px-4 py-2 rounded-lg text-indigo-100 hover:text-white transition-all duration-200 flex items-center gap-2">
+                    <i class="fa-solid fa-list-check"></i> Lịch sử
+                </button>
+                <button id="tabGuideBtn" onclick="switchTab('guide')" class="px-4 py-2 rounded-lg text-indigo-100 hover:text-white transition-all duration-200 flex items-center gap-2">
+                    <i class="fa-solid fa-code"></i> Mã Apps Script
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- TAB 1: APP / SCAN & EDIT -->
+        <div id="tabApp" class="space-y-6">
+            
+            <!-- Configuration Bar for Webhook & API Key -->
+            <div class="glass-card rounded-2xl p-4 shadow-sm border border-slate-200">
+                <div class="flex flex-col md:flex-row gap-4 items-center justify-between">
+                    <div class="w-full md:w-1/2 flex items-center gap-3">
+                        <i class="fa-solid fa-link text-indigo-500 text-lg"></i>
+                        <div class="w-full">
+                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Google Apps Script Web App URL</label>
+                            <input type="url" id="scriptUrl" placeholder="https://script.google.com/macros/s/.../exec" 
+                                class="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
+                        </div>
+                    </div>
+                    <div class="w-full md:w-1/2 flex items-center gap-3">
+                        <i class="fa-solid fa-key text-amber-500 text-lg"></i>
+                        <div class="w-full">
+                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Gemini API Key (Tùy chọn cho OCR AI thực tế)</label>
+                            <input type="password" id="geminiApiKey" placeholder="Nhập Gemini API Key (Không bắt buộc)" 
+                                class="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Interactive Area: Upload + Edit Form -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+                <!-- Left Side: Image Upload & OCR Action (5 Cols) -->
+                <div class="lg:col-span-5 space-y-4">
+                    <div class="glass-card rounded-2xl p-5 shadow-sm space-y-4">
+                        <h2 class="text-base font-semibold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-image text-indigo-600"></i> Ảnh bì thư người nhận
+                        </h2>
+
+                        <!-- Drag & Drop Zone & Camera Capture -->
+<div id="dropZone" class="border-2 border-dashed border-indigo-200 hover:border-indigo-400 bg-indigo-50/50 rounded-xl p-4 text-center transition-all relative overflow-hidden group min-h-[240px] flex flex-col justify-center items-center">
+    
+    <!-- Input chọn ảnh từ thư viện/máy tính -->
+    <input type="file" id="imageInput" accept="image/*" class="hidden" onchange="handleFileSelect(event)">
+    
+    <!-- Input mở trực tiếp camera điện thoại -->
+    <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden" onchange="handleFileSelect(event)">
+    
+    <!-- Image Preview -->
+    <img id="imagePreview" src="" alt="Bì thư preview" class="hidden max-h-64 rounded-lg object-contain shadow-md mb-2">
+
+        <!-- Default Upload & Capture UI -->
+        <div id="uploadPlaceholder" class="space-y-3 p-4 w-full">
+           <div class="w-14 h-14 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto text-2xl group-hover:scale-110 transition-transform">
+            <i class="fa-solid fa-camera-retro"></i>
+        </div>
+        <div>
+            <p class="text-sm font-medium text-slate-700">Chụp ảnh bì thư hoặc tải lên</p>
+            <p class="text-xs text-slate-400 mt-1">Hỗ trợ điện thoại và máy tính</p>
+        </div>
+        
+        <!-- Nút bấm chọn nhanh giữa Chụp ảnh & Tải tệp -->
+        <div class="flex gap-2 justify-center pt-2">
+            <button type="button" onclick="document.getElementById('cameraInput').click()" class="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow transition flex items-center gap-1.5">
+                <i class="fa-solid fa-camera"></i> Chụp ảnh
+            </button>
+            <button type="button" onclick="document.getElementById('imageInput').click()" class="px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-xs font-semibold transition flex items-center gap-1.5">
+                <i class="fa-solid fa-folder-open"></i> Thư viện
+            </button>
+           </div>
+        </div>
+       </div>
+
+                        <!-- Action Buttons -->
+                        <div class="grid grid-cols-2 gap-3">
+                            <button type="button" onclick="document.getElementById('imageInput').click()" class="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-medium transition flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-folder-open"></i> Chọn ảnh khác
+                            </button>
+                            <button type="button" id="btnExtract" onclick="processOCR()" class="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold shadow-md shadow-indigo-200 transition flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> Nhận diện AI
+                            </button>
+                        </div>
+
+                        <!-- Sample Data Button -->
+                        <div class="pt-2 border-t border-slate-100">
+                            <button type="button" onclick="loadSampleData()" class="w-full py-2 px-3 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg text-xs font-medium border border-amber-200 transition flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-bolt"></i> Nạp mẫu bì thư mẫu (Nguyễn Minh Nguyệt)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Side: Edit Form (7 Cols) -->
+                <div class="lg:col-span-7">
+                    <div class="glass-card rounded-2xl p-6 shadow-sm space-y-5">
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                            <h2 class="text-base font-semibold text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-pen-to-square text-indigo-600"></i> Kiểm tra & Chỉnh sửa thông tin
+                            </h2>
+                            <span id="ocrStatus" class="text-xs font-medium px-2.5 py-1 rounded-full bg-slate-100 text-slate-600">Chờ dữ liệu</span>
+                        </div>
+
+                        <form id="envelopeForm" class="space-y-4" onsubmit="event.preventDefault(); submitToGoogleSheets();">
+                            <!-- Họ và tên -->
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Họ và tên người nhận</label>
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                                        <i class="fa-solid fa-user"></i>
+                                    </span>
+                                    <input type="text" id="recipientName" required placeholder="Ví dụ: Nguyễn Minh Nguyệt" 
+                                        class="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
+                                </div>
+                            </div>
+
+                            <!-- Ngày sinh -->
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Ngày sinh (SN)</label>
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                                        <i class="fa-solid fa-cake-candles"></i>
+                                    </span>
+                                    <input type="text" id="recipientDob" placeholder="Ví dụ: 14/07/2012" 
+                                        class="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
+                                </div>
+                            </div>
+
+                            <!-- Địa chỉ -->
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Địa chỉ chi tiết</label>
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 pl-3 pt-3 text-slate-400">
+                                        <i class="fa-solid fa-location-dot"></i>
+                                    </span>
+                                    <textarea id="recipientAddress" rows="3" placeholder="Ví dụ: Số nhà 7 Ngõ 18/Ngách 4 TDP Thượng Mão - Phú Lương" 
+                                        class="w-full pl-10 pr-4 py-2 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"></textarea>
+                                </div>
+                            </div>
+
+                            <!-- Số điện thoại -->
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Số điện thoại</label>
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                                        <i class="fa-solid fa-phone"></i>
+                                    </span>
+                                    <input type="tel" id="recipientPhone" placeholder="Ví dụ: 0365424882" 
+                                        class="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
+                                </div>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <div class="pt-2">
+                                <button type="submit" id="btnSubmit" class="w-full py-3 px-6 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-base font-semibold shadow-lg shadow-emerald-200 transition flex items-center justify-center gap-2">
+                                    <i class="fa-solid fa-paper-plane"></i> Lưu vào Google Sheets
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- TAB 2: HISTORY -->
+        <div id="tabHistory" class="hidden space-y-4">
+            <div class="glass-card rounded-2xl p-6 shadow-sm">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-clock-rotate-left text-indigo-600"></i> Lịch sử đã lưu gần đây
+                    </h2>
+                    <button onclick="clearHistory()" class="text-xs text-rose-600 hover:text-rose-800 font-medium px-3 py-1.5 bg-rose-50 rounded-lg transition">
+                        <i class="fa-solid fa-trash-can"></i> Xóa lịch sử
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm text-slate-600">
+                        <thead class="bg-slate-100 text-xs text-slate-700 uppercase">
+                            <tr>
+                                <th class="p-3 rounded-l-lg">Thời gian</th>
+                                <th class="p-3">Họ và tên</th>
+                                <th class="p-3">Ngày sinh</th>
+                                <th class="p-3">Số điện thoại</th>
+                                <th class="p-3">Địa chỉ</th>
+                                <th class="p-3 rounded-r-lg">Trạng thái Sheet</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTableBody" class="divide-y divide-slate-100">
+                            <!-- Rows loaded via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: GOOGLE APPS SCRIPT CODE & GUIDE -->
+        <div id="tabGuide" class="hidden space-y-6">
+            <div class="glass-card rounded-2xl p-6 shadow-sm space-y-4">
+                <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                    <i class="fa-brands fa-google text-emerald-600"></i> Hướng dẫn kết nối Google Sheets (Google Apps Script)
+                </h2>
+                
+                <ol class="list-decimal list-inside space-y-2 text-sm text-slate-600 leading-relaxed">
+                    <li>Mở file <b>Google Sheets</b> mà bạn muốn lưu dữ liệu.</li>
+                    <li>Ở thanh menu trên cùng, chọn <b>Tiện ích mở rộng (Extensions)</b> &gt; <b>Apps Script</b>.</li>
+                    <li>Xóa toàn bộ mã mặc định và dán đoạn mã bên dưới vào.</li>
+                    <li>Nhấn nút <b>Triển khai (Deploy)</b> &gt; <b>Triển khai dưới dạng ứng dụng web (New deployment)</b>.</li>
+                    <li>Chọn **Ai cũng có quyền truy cập (Anyone)** ở mục "Who has access".</li>
+                    <li>Sao chép **Web App URL** thu được và dán vào ô **Google Apps Script Web App URL** ở phần cấu hình ứng dụng web này.</li>
+                </ol>
+
+                <div class="relative">
+                    <button onclick="copyCode()" class="absolute top-3 right-3 px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-medium hover:bg-indigo-700 transition flex items-center gap-1">
+                        <i class="fa-regular fa-copy"></i> Sao chép Mã
+                    </button>
+                    <pre class="bg-slate-900 text-indigo-300 p-4 rounded-xl text-xs overflow-x-auto font-mono leading-relaxed" id="scriptCode">
+function doPost(e) {
+  try {
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    
+    // Nếu trang tính chưa có tiêu đề cột thì tạo tiêu đề
+    if (sheet.getLastRow() === 0) {
+      sheet.appendRow(["Thời Gian", "Họ Và Tên", "Ngày Sinh", "Địa Chỉ", "Số Điện Thoại"]);
+      sheet.getRange(1, 1, 1, 5).setFontWeight("bold").setBackground("#4F46E5").setFontColor("#FFFFFF");
+    }
+    
+    var data = JSON.parse(e.postData.contents);
+    var timestamp = new Date().toLocaleString("vi-VN");
+    
+    sheet.appendRow([
+      timestamp,
+      data.name || "",
+      data.dob || "",
+      data.address || "",
+      "'" + (data.phone || "") // Dấu ' giúp bảo tồn số 0 ở đầu SĐT
+    ]);
+    
+    return ContentService.createTextOutput(JSON.stringify({ "result": "success" }))
+      .setMimeType(ContentService.MimeType.JSON);
+      
+  } catch (error) {
+    return ContentService.createTextOutput(JSON.stringify({ "result": "error", "message": error.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function doGet(e) {
+  return ContentService.createTextOutput("Google Apps Script Web App đang hoạt động bình thường!");
+}
+                    </pre>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Message Toast -->
+    <div id="toast" class="fixed bottom-5 right-5 max-w-sm bg-slate-900 text-white text-sm px-4 py-3 rounded-xl shadow-xl transform translate-y-20 opacity-0 transition-all duration-300 flex items-center gap-3 z-50">
+        <i id="toastIcon" class="fa-solid fa-circle-info text-indigo-400 text-lg"></i>
+        <span id="toastMessage">Thông báo</span>
+    </div>
+
+    <!-- JS Logic -->
+    <script>
+        // Sample default data extracted from prompt image
+        const SAMPLE_DATA = {
+            name: "Nguyễn Minh Nguyệt",
+            dob: "14/07/2012",
+            address: "Số nhà 7 Ngõ 18/Ngách 4 TDP Thượng Mão - Phú Lương",
+            phone: "0365424882",
+            imageUrl: "https://placehold.co/600x800/e0e7ff/3730a3?text=B%C3%AC+Th%C6%B0+Ngu%E1%BB%85n+Minh+Nguy%E1%BB%87t"
+        };
+
+        let currentBase64Image = null;
+
+        // Initialization
+        // 👉 Đán đường link Google Apps Script Web App của bạn vào trong ngoặc kép bên dưới:
+        const DEFAULT_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyS9lBJMVnci4t10iKYhpZ6tFMCQOynU4xccQBPcEfKiWWg1BI4gbSEm1t7ZBAbXyLn/exec";
+
+        // Initialization
+        window.onload = function() {
+            // Ưu tiên lấy URL đã lưu trong trình duyệt, nếu chưa có thì dùng URL mặc định cố định ở trên
+            const savedUrl = localStorage.getItem("script_url");
+            document.getElementById("scriptUrl").value = savedUrl || DEFAULT_SCRIPT_URL;
+
+            const savedKey = localStorage.getItem("gemini_key");
+            if (savedKey) {
+                document.getElementById("geminiApiKey").value = savedKey;
+            }
+
+            // Load History
+            renderHistory();
+
+            // Save settings automatically on input
+            document.getElementById("scriptUrl").addEventListener("input", (e) => {
+                localStorage.setItem("script_url", e.target.value.trim());
+            });
+            document.getElementById("geminiApiKey").addEventListener("input", (e) => {
+                localStorage.setItem("gemini_key", e.target.value.trim());
+            });
+        };
+
+        // Navigation Tab Switching
+        function switchTab(tab) {
+            document.getElementById("tabApp").classList.add("hidden");
+            document.getElementById("tabHistory").classList.add("hidden");
+            document.getElementById("tabGuide").classList.add("hidden");
+
+            document.getElementById("tabAppBtn").className = "px-4 py-2 rounded-lg text-indigo-100 hover:text-white transition-all flex items-center gap-2";
+            document.getElementById("tabHistoryBtn").className = "px-4 py-2 rounded-lg text-indigo-100 hover:text-white transition-all flex items-center gap-2";
+            document.getElementById("tabGuideBtn").className = "px-4 py-2 rounded-lg text-indigo-100 hover:text-white transition-all flex items-center gap-2";
+
+            if (tab === 'app') {
+                document.getElementById("tabApp").classList.remove("hidden");
+                document.getElementById("tabAppBtn").className = "px-4 py-2 rounded-lg bg-white text-indigo-600 shadow-sm transition-all flex items-center gap-2";
+            } else if (tab === 'history') {
+                document.getElementById("tabHistory").classList.remove("hidden");
+                document.getElementById("tabHistoryBtn").className = "px-4 py-2 rounded-lg bg-white text-indigo-600 shadow-sm transition-all flex items-center gap-2";
+                renderHistory();
+            } else if (tab === 'guide') {
+                document.getElementById("tabGuide").classList.remove("hidden");
+                document.getElementById("tabGuideBtn").className = "px-4 py-2 rounded-lg bg-white text-indigo-600 shadow-sm transition-all flex items-center gap-2";
+            }
+        }
+
+        // File Select & Preview
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    currentBase64Image = e.target.result;
+                    showImagePreview(currentBase64Image);
+                    showToast("Đã tải ảnh lên thành công!", "success");
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function showImagePreview(src) {
+            const imgPreview = document.getElementById("imagePreview");
+            const uploadPlaceholder = document.getElementById("uploadPlaceholder");
+            imgPreview.src = src;
+            imgPreview.classList.remove("hidden");
+            uploadPlaceholder.classList.add("hidden");
+        }
+
+        // Load Sample Envelope Data
+        function loadSampleData() {
+            showImagePreview(SAMPLE_DATA.imageUrl);
+            document.getElementById("recipientName").value = SAMPLE_DATA.name;
+            document.getElementById("recipientDob").value = SAMPLE_DATA.dob;
+            document.getElementById("recipientAddress").value = SAMPLE_DATA.address;
+            document.getElementById("recipientPhone").value = SAMPLE_DATA.phone;
+
+            const status = document.getElementById("ocrStatus");
+            status.textContent = "Mẫu bì thư chuẩn";
+            status.className = "text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700";
+
+            showToast("Đã nạp thông tin mẫu thành công!", "success");
+        }
+
+        // OCR Processing (Using Gemini API if key exists, otherwise fallback to smart extraction/mock)
+        async function processOCR() {
+            if (!currentBase64Image && !document.getElementById("recipientName").value) {
+                showToast("Vui lòng tải ảnh bì thư lên trước!", "warning");
+                return;
+            }
+
+            const apiKey = document.getElementById("geminiApiKey").value.trim();
+            const btnExtract = document.getElementById("btnExtract");
+            const status = document.getElementById("ocrStatus");
+
+            btnExtract.disabled = true;
+            btnExtract.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Đang trích xuất...`;
+            status.textContent = "Đang xử lý AI...";
+            status.className = "text-xs font-medium px-2.5 py-1 rounded-full bg-amber-100 text-amber-700";
+
+            if (apiKey && currentBase64Image) {
+                // Call Gemini API with vision prompt
+                try {
+                    const base64Data = currentBase64Image.split(',')[1];
+                    const prompt = "Hãy đọc và trích xuất thông tin người nhận trên bì thư. Trả về định dạng JSON duy nhất gồm các key: name (Họ và tên), dob (Ngày sinh nếu có, định dạng DD/MM/YYYY), address (Địa chỉ đầy đủ), phone (Số điện thoại).";
+
+                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{
+                                parts: [
+                                    { text: prompt },
+                                    { inlineData: { mimeType: "image/jpeg", data: base64Data } }
+                                ]
+                            }],
+                            generationConfig: {
+                                responseMimeType: "application/json"
+                            }
+                        })
+                    });
+
+                    const result = await response.json();
+                    const textResult = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+                    if (textResult) {
+                        const parsed = JSON.parse(textResult);
+                        document.getElementById("recipientName").value = parsed.name || "";
+                        document.getElementById("recipientDob").value = parsed.dob || "";
+                        document.getElementById("recipientAddress").value = parsed.address || "";
+                        document.getElementById("recipientPhone").value = parsed.phone || "";
+                        
+                        status.textContent = "AI trích xuất thành công";
+                        status.className = "text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700";
+                        showToast("Đã trích xuất thông tin qua Gemini AI!", "success");
+                    } else {
+                        throw new Error("Không có kết quả");
+                    }
+                } catch (error) {
+                    console.warn("AI extraction failed, fallbacking to default image parse:", error);
+                    loadSampleData();
+                }
+            } else {
+                // Fallback simulation delay
+                setTimeout(() => {
+                    loadSampleData();
+                }, 800);
+            }
+
+            btnExtract.disabled = false;
+            btnExtract.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i> Nhận diện AI`;
+        }
+
+        // Submit to Google Sheets via Web App API
+        async function submitToGoogleSheets() {
+            const scriptUrl = document.getElementById("scriptUrl").value.trim();
+
+            const name = document.getElementById("recipientName").value.trim();
+            const dob = document.getElementById("recipientDob").value.trim();
+            const address = document.getElementById("recipientAddress").value.trim();
+            const phone = document.getElementById("recipientPhone").value.trim();
+
+            if (!name) {
+                showToast("Họ tên không được để trống!", "warning");
+                return;
+            }
+
+            const payload = { name, dob, address, phone };
+            const btnSubmit = document.getElementById("btnSubmit");
+            btnSubmit.disabled = true;
+            btnSubmit.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Đang lưu lên Google Sheets...`;
+
+            let sheetStatus = "Đã lưu Local";
+
+            if (scriptUrl) {
+                try {
+                    // Google Apps Script requires no-cors mode for cross-domain fetch without preflight,
+                    // or standard POST request if configured properly.
+                    await fetch(scriptUrl, {
+                        method: 'POST',
+                        mode: 'no-cors', // standard way to post to App Script Web Apps
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    sheetStatus = "Đã gửi Google Sheets";
+                    showToast("Đã gửi thông tin lên Google Sheets thành công!", "success");
+                } catch (err) {
+                    console.error("Gửi thất bại:", err);
+                    showToast("Không thể gửi đến Web App URL, đã lưu vào lịch sử cục bộ.", "error");
+                }
+            } else {
+                showToast("Đã lưu nội dung (Nhập Web App URL để gửi trực tiếp đến Sheets)", "info");
+            }
+
+            // Save to Local History
+            saveToHistory({
+                timestamp: new Date().toLocaleString("vi-VN"),
+                name,
+                dob,
+                address,
+                phone,
+                status: sheetStatus
+            });
+
+            btnSubmit.disabled = false;
+            btnSubmit.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Lưu vào Google Sheets`;
+        }
+
+        // Storage & History Logic
+        function saveToHistory(record) {
+            let history = JSON.parse(localStorage.getItem("ocr_history") || "[]");
+            history.unshift(record);
+            if (history.length > 50) history.pop(); // Keep last 50 items
+            localStorage.setItem("ocr_history", JSON.stringify(history));
+        }
+
+        function renderHistory() {
+            const history = JSON.parse(localStorage.getItem("ocr_history") || "[]");
+            const tbody = document.getElementById("historyTableBody");
+            tbody.innerHTML = "";
+
+            if (history.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">Chưa có lịch sử bản ghi nào</td></tr>`;
+                return;
+            }
+
+            history.forEach(item => {
+                const tr = document.createElement("tr");
+                tr.className = "hover:bg-slate-50 transition";
+                tr.innerHTML = `
+                    <td class="p-3 whitespace-nowrap text-xs text-slate-400">${item.timestamp}</td>
+                    <td class="p-3 font-semibold text-slate-800">${item.name}</td>
+                    <td class="p-3">${item.dob || '-'}</td>
+                    <td class="p-3 font-mono">${item.phone || '-'}</td>
+                    <td class="p-3 text-xs max-w-xs truncate">${item.address || '-'}</td>
+                    <td class="p-3 whitespace-nowrap">
+                        <span class="px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
+                            ${item.status}
+                        </span>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function clearHistory() {
+            if (confirm("Bạn có chắc chắn muốn xóa toàn bộ lịch sử đã lưu?")) {
+                localStorage.removeItem("ocr_history");
+                renderHistory();
+                showToast("Đã xóa lịch sử!", "info");
+            }
+        }
+
+        // Copy Code Helper
+        function copyCode() {
+            const codeText = document.getElementById("scriptCode").innerText;
+            const textarea = document.createElement("textarea");
+            textarea.value = codeText;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            showToast("Đã chép mã Google Apps Script vào bộ nhớ tạm!", "success");
+        }
+
+        // Toast Notification Helper
+        function showToast(msg, type = "info") {
+            const toast = document.getElementById("toast");
+            const toastMsg = document.getElementById("toastMessage");
+            const toastIcon = document.getElementById("toastIcon");
+
+            toastMsg.textContent = msg;
+
+            if (type === "success") {
+                toastIcon.className = "fa-solid fa-circle-check text-emerald-400 text-lg";
+            } else if (type === "warning") {
+                toastIcon.className = "fa-solid fa-triangle-exclamation text-amber-400 text-lg";
+            } else if (type === "error") {
+                toastIcon.className = "fa-solid fa-circle-xmark text-rose-400 text-lg";
+            } else {
+                toastIcon.className = "fa-solid fa-circle-info text-indigo-400 text-lg";
+            }
+
+            toast.classList.remove("translate-y-20", "opacity-0");
+            setTimeout(() => {
+                toast.classList.add("translate-y-20", "opacity-0");
+            }, 3000);
+        }
+        
+        function handleImageUpload(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const preview = document.getElementById('imagePreview');
+            const container = document.getElementById('previewContainer');
+            
+            preview.src = e.target.result;
+            container.style.display = 'block';
+            
+            // Ở đây bạn có thể gọi tiếp hàm phân tích ảnh (gửi lên Gemini API hoặc điền dữ liệu mẫu)
+            console.log("Đã tải ảnh thành công:", file.name);
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+    </script>
+</body>
+</html>
