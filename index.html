@@ -290,9 +290,13 @@
                     body: JSON.stringify({ imageBase64: base64Img })
                 });
 
-                const result = await response.json();
+                const rawText = await response.text();
+                console.log("Phản hồi từ server:", rawText); // In ra để xem trên Console nếu cần
+                
+                const result = JSON.parse(rawText);
                 
                 if (result.result === "success" && result.data) {
+                    // Gán trực tiếp dữ liệu vào các ô input trên form
                     document.getElementById("recipientName").value = result.data.hoTen || "";
                     document.getElementById("recipientDob").value = result.data.ngaySinh || "";
                     document.getElementById("recipientAddress").value = result.data.diaChi || "";
@@ -300,7 +304,7 @@
 
                     status.textContent = "Thành công (Đã lưu Sheet)";
                     status.className = "text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700";
-                    showToast("Đã quét AI và lưu vào Google Sheets!", "success");
+                    showToast("Đã quét AI và điền thông tin thành công!", "success");
 
                     saveToHistory({
                         timestamp: new Date().toLocaleString("vi-VN"),
@@ -311,19 +315,18 @@
                         status: "Đã gửi Google Sheets"
                     });
                 } else {
-                    throw new Error("Không trích xuất được dữ liệu");
+                    throw new Error(result.message || "Không trích xuất được dữ liệu");
                 }
             } catch (err) {
                 console.error("Lỗi:", err);
-                showToast("Lỗi xử lý AI, vui lòng thử lại!", "error");
-                status.textContent = "Lỗi xử lý";
+                showToast("AI không đọc được chữ, vui lòng chụp rõ hơn!", "error");
+                status.textContent = "Lỗi nhận dạng";
                 status.className = "text-xs font-medium px-2.5 py-1 rounded-full bg-rose-100 text-rose-700";
             } finally {
                 btnExtract.disabled = false;
                 btnExtract.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i> Nhận diện AI lại`;
             }
         }
-
         function manualOCRProcess() {
             if (!currentBase64Image) {
                 showToast("Vui lòng chụp ảnh bì thư trước!", "warning");
