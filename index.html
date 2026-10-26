@@ -273,31 +273,25 @@
                 uploadPlaceholder.style.display = "none";
             }
         }
-
         async function processAIAndSave(base64Img) {
-            const scriptUrl = DEFAULT_SCRIPT_URL;
             const status = document.getElementById("ocrStatus");
             const btnExtract = document.getElementById("btnExtract");
 
-            status.textContent = "AI đang đọc chữ (khoảng 5-10 giây)...";
+            status.textContent = "AI đang đọc chữ (vui lòng đợi vài giây)...";
             status.className = "text-xs font-medium px-2.5 py-1 rounded-full bg-amber-100 text-amber-700";
             btnExtract.disabled = true;
-            btnExtract.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Đang xử lý AI...`;
+            btnExtract.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Đang xử lý...`;
 
             try {
-                // Bắt buộc dùng await để trình duyệt đứng chờ server Google Apps Script xử lý xong
-                const response = await fetch(scriptUrl, {
+                // Gửi ảnh base64 qua Google Apps Script để server gọi AI (tránh lỗi CORS của trình duyệt)
+                const response = await fetch(DEFAULT_SCRIPT_URL, {
                     method: 'POST',
                     body: JSON.stringify({ imageBase64: base64Img })
                 });
 
-                if (!response.ok) {
-                    throw new Error("Lỗi kết nối tới server Google Apps Script");
-                }
-
                 const rawText = await response.text();
                 const result = JSON.parse(rawText);
-                
+
                 if (result.result === "success" && result.data && (result.data.hoTen || result.data.diaChi)) {
                     // Điền dữ liệu thật lên form
                     document.getElementById("recipientName").value = result.data.hoTen || "";
@@ -307,22 +301,13 @@
 
                     status.textContent = "Quét thành công";
                     status.className = "text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700";
-                    showToast("Đã trích xuất thông tin thành công!", "success");
-
-                    saveToHistory({
-                        timestamp: new Date().toLocaleString("vi-VN"),
-                        name: result.data.hoTen,
-                        dob: result.data.ngaySinh,
-                        address: result.data.diaChi,
-                        phone: result.data.sdt,
-                        status: "Đã gửi Google Sheets"
-                    });
+                    showToast("Đã trích xuất và lưu vào Sheet!", "success");
                 } else {
-                    throw new Error("AI không đọc được nội dung từ ảnh");
+                    throw new Error("Không lấy được dữ liệu từ AI");
                 }
             } catch (err) {
                 console.error("Lỗi:", err);
-                showToast("Không đọc được chữ từ ảnh, vui lòng thử lại!", "error");
+                showToast("Không đọc được chữ, vui lòng thử lại!", "error");
                 status.textContent = "Lỗi nhận dạng";
                 status.className = "text-xs font-medium px-2.5 py-1 rounded-full bg-rose-100 text-rose-700";
             } finally {
@@ -330,6 +315,7 @@
                 btnExtract.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i> Nhận diện AI lại`;
             }
         }
+        
         function manualOCRProcess() {
             if (!currentBase64Image) {
                 showToast("Vui lòng chụp ảnh bì thư trước!", "warning");
