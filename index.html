@@ -273,79 +273,51 @@
                 uploadPlaceholder.style.display = "none";
             }
         }
+        
       async function processAIAndSave(base64Img) {
             const status = document.getElementById("ocrStatus");
             const btnExtract = document.getElementById("btnExtract");
 
-            status.textContent = "AI đang đọc chữ...";
+            status.textContent = "AI đang đọc chữ (vui lòng đợi)...";
             status.className = "text-xs font-medium px-2.5 py-1 rounded-full bg-amber-100 text-amber-700";
             btnExtract.disabled = true;
             btnExtract.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Đang xử lý...`;
 
             try {
-                const GEMINI_API_KEY = "AQ.Ab8RN6LdfivRvFXhtMQA-L3wZ_DXiU1s3lCKrL1WIBdvbTLg6Q";
-                const cleanBase64 = base64Img.split(',')[1] || base64Img;
-                
-                // Dùng endpoint v1 và model gemini-1.5-flash chuẩn cho bản Free
-                const aiUrl = "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=" + GEMINI_API_KEY;
-
-                const aiPayload = {
-                    "contents": [{
-                        "parts": [
-                            { "text": "Hãy đọc và trích xuất thông tin người nhận trên bì thư này. Chỉ trả về ĐÚNG định dạng JSON thuần túy (không kèm markdown ```json) với các key chính xác: \"name\" (Họ và tên), \"dob\" (Ngày sinh nếu có), \"address\" (Địa chỉ đầy đủ), \"phone\" (Số điện thoại)." },
-                            { "inlineData": { "mimeType": "image/jpeg", "data": cleanBase64 } }
-                        ]
-                    }],
-                    "generationConfig": {
-                        "responseMimeType": "application/json"
-                    }
-                };
-
-                const aiResponse = await fetch(aiUrl, {
+                // Gửi ảnh base64 qua Google Apps Script để server gọi AI (tránh lộ Key và lỗi Not Valid trên web)
+                const response = await fetch(DEFAULT_SCRIPT_URL, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(aiPayload)
+                    body: JSON.stringify({ imageBase64: base64Img })
                 });
 
-                const aiJson = await aiResponse.json();
-                console.log("RAW AI Response:", aiJson);
+                const rawText = await response.text();
+                const result = JSON.parse(rawText);
 
-                if (aiJson.error) {
-                    throw new Error(aiJson.error.message || "Lỗi từ Google API");
+                if (result.result === "success" && result.data && (result.data.hoTen || result.data.diaChi)) {
+                    // Điền dữ liệu thật lên form
+                    document.getElementById("recipientName").value = result.data.hoTen || "";
+                    document.getElementById("recipientDob").value = result.data.ngaySinh || "";
+                    document.getElementById("recipientAddress").value = result.data.diaChi || "";
+                    document.getElementById("recipientPhone").value = result.data.sdt || "";
+
+                    status.textContent = "Quét thành công";
+                    status.className = "text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700";
+                    showToast("Đã trích xuất và lưu vào Sheet!", "success");
+
+                    saveToHistory({
+                        timestamp: new Date().toLocaleString("vi-VN"),
+                        name: result.data.hoTen,
+                        dob: result.data.ngaySinh,
+                        address: result.data.diaChi,
+                        phone: result.data.sdt,
+                        status: "Đã gửi Google Sheets"
+                    });
+                } else {
+                    throw new Error("Không lấy được dữ liệu từ AI");
                 }
-
-                if (!aiJson.candidates || aiJson.candidates.length === 0) {
-                    throw new Error("Không có candidates trả về từ AI");
-                }
-
-                const textResult = aiJson.candidates[0].content.parts[0].text;
-                const cleanedText = textResult.replace(/```json/g, "").replace(/```/g, "").trim();
-                const parsedData = JSON.parse(cleanedText);
-
-                // Điền dữ liệu ra form web
-                document.getElementById("recipientName").value = parsedData.name || "";
-                document.getElementById("recipientDob").value = parsedData.dob || "";
-                document.getElementById("recipientAddress").value = parsedData.address || "";
-                document.getElementById("recipientPhone").value = parsedData.phone || "";
-
-                status.textContent = "Quét thành công";
-                status.className = "text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700";
-                showToast("Đã nhận diện thành công!", "success");
-
-                // Đẩy dữ liệu lên Google Sheets
-                await fetch(DEFAULT_SCRIPT_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        hoTen: parsedData.name || "",
-                        ngaySinh: parsedData.dob || "",
-                        address: parsedData.address || "",
-                        sdt: parsedData.phone || ""
-                    })
-                });
-
             } catch (err) {
-                console.error("Chi tiết lỗi AI:", err);
-                showToast("Lỗi: " + err.message, "error");
+                console.error("Lỗi:", err);
+                showToast("Không đọc được chữ, vui lòng thử lại!", "error");
                 status.textContent = "Lỗi nhận dạng";
                 status.className = "text-xs font-medium px-2.5 py-1 rounded-full bg-rose-100 text-rose-700";
             } finally {
