@@ -279,32 +279,35 @@
             const status = document.getElementById("ocrStatus");
             const btnExtract = document.getElementById("btnExtract");
 
-            status.textContent = "Đang xử lý AI & Lưu Sheets...";
+            status.textContent = "AI đang đọc chữ (khoảng 5-10 giây)...";
             status.className = "text-xs font-medium px-2.5 py-1 rounded-full bg-amber-100 text-amber-700";
             btnExtract.disabled = true;
-            btnExtract.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Đang xử lý tự động...`;
+            btnExtract.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Đang xử lý AI...`;
 
             try {
+                // Bắt buộc dùng await để trình duyệt đứng chờ server Google Apps Script xử lý xong
                 const response = await fetch(scriptUrl, {
                     method: 'POST',
                     body: JSON.stringify({ imageBase64: base64Img })
                 });
 
+                if (!response.ok) {
+                    throw new Error("Lỗi kết nối tới server Google Apps Script");
+                }
+
                 const rawText = await response.text();
-                console.log("Phản hồi từ server:", rawText); // In ra để xem trên Console nếu cần
-                
                 const result = JSON.parse(rawText);
                 
-                if (result.result === "success" && result.data) {
-                    // Gán trực tiếp dữ liệu vào các ô input trên form
+                if (result.result === "success" && result.data && (result.data.hoTen || result.data.diaChi)) {
+                    // Điền dữ liệu thật lên form
                     document.getElementById("recipientName").value = result.data.hoTen || "";
                     document.getElementById("recipientDob").value = result.data.ngaySinh || "";
                     document.getElementById("recipientAddress").value = result.data.diaChi || "";
                     document.getElementById("recipientPhone").value = result.data.sdt || "";
 
-                    status.textContent = "Thành công (Đã lưu Sheet)";
+                    status.textContent = "Quét thành công";
                     status.className = "text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700";
-                    showToast("Đã quét AI và điền thông tin thành công!", "success");
+                    showToast("Đã trích xuất thông tin thành công!", "success");
 
                     saveToHistory({
                         timestamp: new Date().toLocaleString("vi-VN"),
@@ -315,11 +318,11 @@
                         status: "Đã gửi Google Sheets"
                     });
                 } else {
-                    throw new Error(result.message || "Không trích xuất được dữ liệu");
+                    throw new Error("AI không đọc được nội dung từ ảnh");
                 }
             } catch (err) {
                 console.error("Lỗi:", err);
-                showToast("AI không đọc được chữ, vui lòng chụp rõ hơn!", "error");
+                showToast("Không đọc được chữ từ ảnh, vui lòng thử lại!", "error");
                 status.textContent = "Lỗi nhận dạng";
                 status.className = "text-xs font-medium px-2.5 py-1 rounded-full bg-rose-100 text-rose-700";
             } finally {
