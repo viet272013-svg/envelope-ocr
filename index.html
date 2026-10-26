@@ -285,8 +285,9 @@
             try {
                 const GEMINI_API_KEY = "AQ.Ab8RN6ISKWfiCSTBEvMXGT6u-NGQclTNZjIoy8fKC2cTrwd0fA";
                 const cleanBase64 = base64Img.split(',')[1] || base64Img;
-               // Đổi từ gemini-1.5-flash sang model chuẩn v1beta
-               const aiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent?key=" + GEMINI_API_KEY;
+                
+                // Dùng endpoint v1 và model gemini-1.5-flash chuẩn cho bản Free
+                const aiUrl = "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=" + GEMINI_API_KEY;
 
                 const aiPayload = {
                     "contents": [{
@@ -307,8 +308,6 @@
                 });
 
                 const aiJson = await aiResponse.json();
-                
-                // In toàn bộ phản hồi từ AI ra Console để kiểm tra trực quan
                 console.log("RAW AI Response:", aiJson);
 
                 if (aiJson.error) {
