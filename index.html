@@ -274,22 +274,45 @@
             }
         }
 
-        // Xử lý khi chọn ảnh hoặc chụp ảnh xong -> Gửi thẳng lên Apps Script để AI đọc và tự động lưu Sheets
+        // Xử lý khi chọn ảnh hoặc chụp ảnh xong -> Nén ảnh nhỏ lại trước khi gửi để siêu tốc
         function handleFileSelect(event) {
             const file = event.target.files[0];
             if (file) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    currentBase64Image = e.target.result;
-                    showImagePreview(currentBase64Image);
-                    
-                    // Gửi ảnh trực tiếp lên Google Apps Script để nhờ AI xử lý thông minh và lưu luôn
-                    processAIAndSave(currentBase64Image);
+                    const img = new Image();
+                    img.src = e.target.result;
+                    img.onload = function() {
+                        // Tạo canvas để thu nhỏ ảnh về chiều rộng tối đa 1000px giúp giảm dung lượng
+                        const canvas = document.createElement('canvas');
+                        const MAX_WIDTH = 1000;
+                        let width = img.width;
+                        let height = img.height;
+                        
+                        if (width > MAX_WIDTH) {
+                            height = Math.round((height * MAX_WIDTH) / width);
+                            width = MAX_WIDTH;
+                        }
+                        
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        // Lấy ảnh đã nén dưới dạng base64 (chất lượng 0.8)
+                        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
+                        
+                        currentBase64Image = compressedBase64;
+                        showImagePreview(compressedBase64);
+                        
+                        // Gửi ảnh đã nén lên Google Apps Script
+                        processAIAndSave(compressedBase64);
+                    }
                 };
                 reader.readAsDataURL(file);
             }
         }
-
+        
         function showImagePreview(src) {
             const imgPreview = document.getElementById("imagePreview");
             const uploadPlaceholder = document.getElementById("uploadPlaceholder");
