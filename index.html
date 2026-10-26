@@ -204,54 +204,13 @@
     <!-- JS Logic -->
     <script>
         let currentBase64Image = null;
-        let cachedApiKey = "";
-        
-        // 👉 ĐƯỜNG LINK GOOGLE APPS SCRIPT CỦA BẠN
-        const DEFAULT_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyS9lBJMVnci4t10iKYhpZ6tFMCQOynU4xccQBPcEfKiWWg1BI4gbSEm1t7ZBAbXyLn/exec";
+        const DEFAULT_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxuQQ7PBesqg4y72cGbSMh_wgauC-vn7j0D22x2_-MgerCwz7DZCn_20u9ZT2fMYnCw/exec";
 
-        // Vừa mở trang web lên là tự động lấy API Key ẩn từ Google Sheets về
-        window.onload = async function() {
+        window.onload = function() {
             renderHistory();
-            const status = document.getElementById("ocrStatus");
-            status.textContent = "Đang kết nối hệ thống...";
-            status.className = "text-xs font-medium px-2.5 py-1 rounded-full bg-amber-100 text-amber-700";
-
-            try {
-                const res = await fetch(DEFAULT_SCRIPT_URL);
-                const data = await res.json();
-                if (data.result === "success" && data.apiKey) {
-                    cachedApiKey = data.apiKey;
-                    status.textContent = "Sẵn sàng quét AI";
-                    status.className = "text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700";
-                    console.log("Đã nạp thành công API Key từ Google Sheets.");
-                } else {
-                    throw new Error("Không tìm thấy Key trong Sheet Config ô A1");
-                }
-            } catch (err) {
-                console.warn("Không thể tự động đọc API Key từ Sheets:", err);
-                status.textContent = "Lỗi kết nối Key";
-                status.className = "text-xs font-medium px-2.5 py-1 rounded-full bg-rose-100 text-rose-700";
-                showToast("Không đọc được cấu hình API Key từ Google Sheets!", "error");
-            }
         };
-        function switchTab(tab) {
-            document.getElementById("tabApp").classList.add("hidden");
-            document.getElementById("tabHistory").classList.add("hidden");
 
-            document.getElementById("tabAppBtn").className = "px-4 py-2 rounded-lg text-indigo-100 hover:text-white transition-all flex items-center gap-2";
-            document.getElementById("tabHistoryBtn").className = "px-4 py-2 rounded-lg text-indigo-100 hover:text-white transition-all flex items-center gap-2";
-
-            if (tab === 'app') {
-                document.getElementById("tabApp").classList.remove("hidden");
-                document.getElementById("tabAppBtn").className = "px-4 py-2 rounded-lg bg-white text-indigo-600 shadow-sm transition-all flex items-center gap-2";
-            } else if (tab === 'history') {
-                document.getElementById("tabHistory").classList.remove("hidden");
-                document.getElementById("tabHistoryBtn").className = "px-4 py-2 rounded-lg bg-white text-indigo-600 shadow-sm transition-all flex items-center gap-2";
-                renderHistory();
-            }
-        }
-
-        // Tự động nén ảnh chụp xuống 800px để xử lý nhanh và nhẹ
+        // Khi chọn hoặc chụp ảnh xong -> Tự động gửi ảnh lên Apps Script để AI đọc và trả kết quả về điền vào form
         function handleFileSelect(event) {
             const file = event.target.files[0];
             if (file) {
@@ -279,7 +238,7 @@
                         currentBase64Image = compressedBase64;
                         showImagePreview(compressedBase64);
                         
-                        processOCRWithAI(compressedBase64);
+                        processAIAndSave(compressedBase64);
                     }
                 };
                 reader.readAsDataURL(file);
@@ -297,61 +256,49 @@
             }
         }
 
-        // Trích xuất AI trực tiếp từ trình duyệt bằng Key an toàn
-        async function processOCRWithAI(base64Img) {
-            if (!cachedApiKey) {
-                showToast("Đang nạp API Key từ Google Sheets, vui lòng thử lại sau 2 giây!", "warning");
-                return;
-            }
-
+        async function processAIAndSave(base64Img) {
+            const scriptUrl = DEFAULT_SCRIPT_URL;
             const status = document.getElementById("ocrStatus");
             const btnExtract = document.getElementById("btnExtract");
 
-            status.textContent = "Đang xử lý AI...";
+            status.textContent = "Đang xử lý AI & Lưu Sheets...";
             status.className = "text-xs font-medium px-2.5 py-1 rounded-full bg-amber-100 text-amber-700";
             btnExtract.disabled = true;
-            btnExtract.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Đang đọc chữ...`;
+            btnExtract.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Đang xử lý tự động...`;
 
             try {
-                const base64Data = base64Img.split(',')[1];
-                const prompt = "Hãy đọc và trích xuất thông tin người nhận trên bì thư. Trả về định dạng JSON thuần túy gồm các key: name (Họ và tên), dob (Ngày sinh nếu có, định dạng DD/MM/YYYY), address (Địa chỉ đầy đủ), phone (Số điện thoại).";
-
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${cachedApiKey}`, {
+                const response = await fetch(scriptUrl, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{
-                            parts: [
-                                { text: prompt },
-                                { inlineData: { mimeType: "image/jpeg", data: base64Data } }
-                            ]
-                        }],
-                        generationConfig: {
-                            responseMimeType: "application/json"
-                        }
-                    })
+                    body: JSON.stringify({ imageBase64: base64Img })
                 });
 
                 const result = await response.json();
-                const textResult = result?.candidates?.[0]?.content?.parts?.[0]?.text;
                 
-                if (textResult) {
-                    const parsed = JSON.parse(textResult);
-                    document.getElementById("recipientName").value = parsed.name || "";
-                    document.getElementById("recipientDob").value = parsed.dob || "";
-                    document.getElementById("recipientAddress").value = parsed.address || "";
-                    document.getElementById("recipientPhone").value = parsed.phone || "";
-                    
-                    status.textContent = "AI đọc thành công";
+                if (result.result === "success" && result.data) {
+                    document.getElementById("recipientName").value = result.data.hoTen || "";
+                    document.getElementById("recipientDob").value = result.data.ngaySinh || "";
+                    document.getElementById("recipientAddress").value = result.data.diaChi || "";
+                    document.getElementById("recipientPhone").value = result.data.sdt || "";
+
+                    status.textContent = "Thành công (Đã lưu Google Sheets)";
                     status.className = "text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700";
-                    showToast("Đã trích xuất thông tin thành công!", "success");
+                    showToast("Đã quét AI và lưu thẳng vào Google Sheets!", "success");
+
+                    saveToHistory({
+                        timestamp: new Date().toLocaleString("vi-VN"),
+                        name: result.data.hoTen,
+                        dob: result.data.ngaySinh,
+                        address: result.data.diaChi,
+                        phone: result.data.sdt,
+                        status: "Đã gửi Google Sheets"
+                    });
                 } else {
-                    throw new Error("Không trích xuất được text từ AI");
+                    throw new Error("Không trích xuất được dữ liệu");
                 }
-            } catch (error) {
-                console.error("Lỗi AI:", error);
-                showToast("Không đọc được ảnh, vui lòng bấm nhận diện lại.", "error");
-                status.textContent = "Lỗi đọc AI";
+            } catch (err) {
+                console.error("Lỗi:", err);
+                showToast("Lỗi xử lý AI, vui lòng thử lại!", "error");
+                status.textContent = "Lỗi xử lý";
                 status.className = "text-xs font-medium px-2.5 py-1 rounded-full bg-rose-100 text-rose-700";
             } finally {
                 btnExtract.disabled = false;
@@ -361,13 +308,12 @@
 
         function manualOCRProcess() {
             if (!currentBase64Image) {
-                showToast("Vui lòng chụp ảnh trước!", "warning");
+                showToast("Vui lòng chụp ảnh bì thư trước!", "warning");
                 return;
             }
-            processOCRWithAI(currentBase64Image);
+            processAIAndSave(currentBase64Image);
         }
 
-        // Lưu dữ liệu vào Google Sheets sau khi nhân viên đã kiểm tra
         async function manualSubmit() {
             const scriptUrl = DEFAULT_SCRIPT_URL;
             const hoTen = document.getElementById("recipientName").value.trim();
@@ -383,43 +329,29 @@
             const payload = { hoTen, ngaySinh, diaChi, sdt };
             const btnSubmit = document.getElementById("btnSubmit");
             btnSubmit.disabled = true;
-            btnSubmit.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Đang lưu vào Google Sheets...`;
+            btnSubmit.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Đang cập nhật lên Sheet...`;
 
             try {
                 await fetch(scriptUrl, {
                     method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
 
-                showToast("Đã lưu vào Google Sheets thành công!", "success");
+                showToast("Đã cập nhật thông tin lên Google Sheets thành công!", "success");
                 saveToHistory({
                     timestamp: new Date().toLocaleString("vi-VN"),
                     name: hoTen,
                     dob: ngaySinh,
                     address: diaChi,
                     phone: sdt,
-                    status: "Đã gửi Google Sheets"
+                    status: "Đã cập nhật Sheet"
                 });
-
-                // Reset form để sẵn sàng chụp bì thư tiếp theo
-                document.getElementById("recipientName").value = "";
-                document.getElementById("recipientDob").value = "";
-                document.getElementById("recipientAddress").value = "";
-                document.getElementById("recipientPhone").value = "";
-                document.getElementById("imagePreview").classList.add("hidden");
-                document.getElementById("uploadPlaceholder").style.display = "block";
-                currentBase64Image = null;
-                document.getElementById("ocrStatus").textContent = "Chờ dữ liệu";
-                document.getElementById("ocrStatus").className = "text-xs font-medium px-2.5 py-1 rounded-full bg-slate-100 text-slate-600";
-
             } catch (err) {
                 console.error("Gửi thất bại:", err);
-                showToast("Không thể gửi đến Google Sheets.", "error");
+                showToast("Không thể gửi dữ liệu cập nhật.", "error");
             } finally {
                 btnSubmit.disabled = false;
-                btnSubmit.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Lưu vào Google Sheets`;
+                btnSubmit.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Lưu cập nhật / Lưu thủ công vào Sheet`;
             }
         }
 
