@@ -206,11 +206,29 @@
         let currentBase64Image = null;
         const DEFAULT_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxuQQ7PBesqg4y72cGbSMh_wgauC-vn7j0D22x2_-MgerCwz7DZCn_20u9ZT2fMYnCw/exec";
 
-        window.onload = function() {
+       window.onload = function() {
             renderHistory();
+            document.getElementById("ocrStatus").textContent = "Sẵn sàng quét AI";
+            document.getElementById("ocrStatus").className = "text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700";
         };
 
-        // Khi chọn hoặc chụp ảnh xong -> Tự động gửi ảnh lên Apps Script để AI đọc và trả kết quả về điền vào form
+        function switchTab(tab) {
+            document.getElementById("tabApp").classList.add("hidden");
+            document.getElementById("tabHistory").classList.add("hidden");
+
+            document.getElementById("tabAppBtn").className = "px-4 py-2 rounded-lg text-indigo-100 hover:text-white transition-all flex items-center gap-2";
+            document.getElementById("tabHistoryBtn").className = "px-4 py-2 rounded-lg text-indigo-100 hover:text-white transition-all flex items-center gap-2";
+
+            if (tab === 'app') {
+                document.getElementById("tabApp").classList.remove("hidden");
+                document.getElementById("tabAppBtn").className = "px-4 py-2 rounded-lg bg-white text-indigo-600 shadow-sm transition-all flex items-center gap-2";
+            } else if (tab === 'history') {
+                document.getElementById("tabHistory").classList.remove("hidden");
+                document.getElementById("tabHistoryBtn").className = "px-4 py-2 rounded-lg bg-white text-indigo-600 shadow-sm transition-all flex items-center gap-2";
+                renderHistory();
+            }
+        }
+
         function handleFileSelect(event) {
             const file = event.target.files[0];
             if (file) {
@@ -280,9 +298,9 @@
                     document.getElementById("recipientAddress").value = result.data.diaChi || "";
                     document.getElementById("recipientPhone").value = result.data.sdt || "";
 
-                    status.textContent = "Thành công (Đã lưu Google Sheets)";
+                    status.textContent = "Thành công (Đã lưu Sheet)";
                     status.className = "text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700";
-                    showToast("Đã quét AI và lưu thẳng vào Google Sheets!", "success");
+                    showToast("Đã quét AI và lưu vào Google Sheets!", "success");
 
                     saveToHistory({
                         timestamp: new Date().toLocaleString("vi-VN"),
@@ -423,5 +441,6 @@
             }, 3000);
         }
     </script>
+    
 </body>
 </html>
