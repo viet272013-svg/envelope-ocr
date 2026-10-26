@@ -274,57 +274,63 @@
         }
 
         async function processAIAndSave(base64Img) {
-            const status = document.getElementById("ocrStatus");
-            const btnExtract = document.getElementById("btnExtract");
+    const status = document.getElementById("ocrStatus");
+    const btnExtract = document.getElementById("btnExtract");
 
-            status.textContent = "AI đang đọc chữ...";
-            status.className = "text-xs font-medium px-2.5 py-1 rounded-full bg-amber-100 text-amber-700";
-            btnExtract.disabled = true;
-            btnExtract.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Đang xử lý...`;
+    // Thay đổi trạng thái hiển thị đang chờ AI đọc
+    status.textContent = "AI đang đọc chữ (vui lòng đợi ~8s)...";
+    status.className = "text-xs font-medium px-2.5 py-1 rounded-full bg-amber-100 text-amber-700";
+    btnExtract.disabled = true;
+    btnExtract.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Đang phân tích ảnh...`;
 
-            try {
-                const response = await fetch(DEFAULT_SCRIPT_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ imageBase64: base64Img })
-                });
+    try {
+        // Gọi dữ liệu lên Google Apps Script và CHỜ (await) kết quả trả về thực tế
+        const response = await fetch(DEFAULT_SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({ imageBase64: base64Img })
+        });
 
-                const rawText = await response.text();
-                const result = JSON.parse(rawText);
+        const rawText = await response.text();
+        console.log("Phản hồi thô từ Apps Script:", rawText);
 
-                if (result.result === "success" && result.data) {
-                    const parsedData = result.data;
+        const result = JSON.parse(rawText);
 
-                    document.getElementById("recipientName").value = parsedData.hoTen || "";
-                    document.getElementById("recipientDob").value = parsedData.ngaySinh || "";
-                    document.getElementById("recipientAddress").value = parsedData.diaChi || "";
-                    document.getElementById("recipientPhone").value = parsedData.sdt || "";
+        if (result.result === "success" && result.data) {
+            const parsedData = result.data;
 
-                    status.textContent = "Quét thành công";
-                    status.className = "text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700";
-                    showToast("Đã nhận diện thành công!", "success");
+            // Điền dữ liệu thực tế vào form
+            document.getElementById("recipientName").value = parsedData.hoTen || "";
+            document.getElementById("recipientDob").value = parsedData.ngaySinh || "";
+            document.getElementById("recipientAddress").value = parsedData.diaChi || "";
+            document.getElementById("recipientPhone").value = parsedData.sdt || "";
 
-                    saveToHistory({
-                        timestamp: new Date().toLocaleString("vi-VN"),
-                        name: parsedData.hoTen || "",
-                        dob: parsedData.ngaySinh || "",
-                        address: parsedData.diaChi || "",
-                        phone: parsedData.sdt || "",
-                        status: "Đã lưu Sheet"
-                    });
-                } else {
-                    throw new Error(result.message || "Lỗi từ Google Apps Script");
-                }
+            status.textContent = "Quét thành công";
+            status.className = "text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700";
+            showToast("Đã nhận diện thành công và lưu Google Sheets!", "success");
 
-            } catch (err) {
-                console.error("Chi tiết lỗi:", err);
-                showToast("Lỗi: " + err.message, "error");
-                status.textContent = "Lỗi nhận dạng";
-                status.className = "text-xs font-medium px-2.5 py-1 rounded-full bg-rose-100 text-rose-700";
-            } finally {
-                btnExtract.disabled = false;
-                btnExtract.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i> Nhận diện AI lại`;
-            }
+            // Lưu vào lịch sử
+            saveToHistory({
+                timestamp: new Date().toLocaleString("vi-VN"),
+                name: parsedData.hoTen || "",
+                dob: parsedData.ngaySinh || "",
+                address: parsedData.diaChi || "",
+                phone: parsedData.sdt || "",
+                status: "Đã lưu Sheet"
+            });
+        } else {
+            throw new Error(result.message || "Lỗi từ Google Apps Script");
         }
+
+    } catch (err) {
+        console.error("Chi tiết lỗi:", err);
+        showToast("Lỗi: " + err.message, "error");
+        status.textContent = "Lỗi nhận dạng";
+        status.className = "text-xs font-medium px-2.5 py-1 rounded-full bg-rose-100 text-rose-700";
+    } finally {
+        btnExtract.disabled = false;
+        btnExtract.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i> Nhận diện AI lại`;
+    }
+}
         
         function manualOCRProcess() {
             if (!currentBase64Image) {
