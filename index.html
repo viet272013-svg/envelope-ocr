@@ -204,7 +204,7 @@
     <!-- JS Logic -->
     <script>
         let currentBase64Image = null;
-        const DEFAULT_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxDEeisXoyqo1UofwR12UMzm4H15BdyB-GTfChWjjOQDE8IacJ_KNtTG85HkD69RbYT/exec";
+        const DEFAULT_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwRuedaOPe44BuyQo9CqtdVhXwLY7gNkf5Mx5CmSEFsqiB1gHAFinMu5Ty-D9Nq5cmy/exec";
 
        window.onload = function() {
             renderHistory();
@@ -284,18 +284,20 @@
     btnExtract.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Đang xử lý...`;
 
     try {
-        // Gửi ảnh Base64 lên Google Apps Script để xử lý OCR và lưu Sheet luôn
         const response = await fetch(DEFAULT_SCRIPT_URL, {
             method: 'POST',
             body: JSON.stringify({ imageBase64: base64Img })
         });
 
-        const result = await response.json();
+        const rawText = await response.text();
+        console.log("Phản hồi thô từ Apps Script:", rawText); // In ra để xem trong Console
+
+        const result = JSON.parse(rawText);
 
         if (result.result === "success" && result.data) {
             const parsedData = result.data;
 
-            // Điền dữ liệu ra form web
+            // Điền dữ liệu vào form
             document.getElementById("recipientName").value = parsedData.hoTen || "";
             document.getElementById("recipientDob").value = parsedData.ngaySinh || "";
             document.getElementById("recipientAddress").value = parsedData.diaChi || "";
@@ -303,9 +305,8 @@
 
             status.textContent = "Quét thành công";
             status.className = "text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700";
-            showToast("Đã nhận diện và lưu vào Google Sheets!", "success");
+            showToast("Đã nhận diện thành công!", "success");
 
-            // Lưu vào lịch sử hiển thị trên web
             saveToHistory({
                 timestamp: new Date().toLocaleString("vi-VN"),
                 name: parsedData.hoTen || "",
@@ -315,7 +316,7 @@
                 status: "Đã lưu Sheet"
             });
         } else {
-            throw new Error(result.message || "Không thể phân tích dữ liệu từ AI");
+            throw new Error(result.message || "Lỗi từ Google Apps Script");
         }
 
     } catch (err) {
@@ -327,6 +328,7 @@
         btnExtract.disabled = false;
         btnExtract.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i> Nhận diện AI lại`;
     }
+}
 }
         
         function manualOCRProcess() {
