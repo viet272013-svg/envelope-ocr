@@ -209,21 +209,31 @@
         // 👉 ĐƯỜNG LINK GOOGLE APPS SCRIPT CỦA BẠN
         const DEFAULT_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyS9lBJMVnci4t10iKYhpZ6tFMCQOynU4xccQBPcEfKiWWg1BI4gbSEm1t7ZBAbXyLn/exec";
 
-        // Tự động đọc API Key từ ô A1 Sheet Config khi vừa mở trang
+        // Vừa mở trang web lên là tự động lấy API Key ẩn từ Google Sheets về
         window.onload = async function() {
             renderHistory();
+            const status = document.getElementById("ocrStatus");
+            status.textContent = "Đang kết nối hệ thống...";
+            status.className = "text-xs font-medium px-2.5 py-1 rounded-full bg-amber-100 text-amber-700";
+
             try {
                 const res = await fetch(DEFAULT_SCRIPT_URL);
                 const data = await res.json();
                 if (data.result === "success" && data.apiKey) {
                     cachedApiKey = data.apiKey;
+                    status.textContent = "Sẵn sàng quét AI";
+                    status.className = "text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700";
                     console.log("Đã nạp thành công API Key từ Google Sheets.");
+                } else {
+                    throw new Error("Không tìm thấy Key trong Sheet Config ô A1");
                 }
             } catch (err) {
                 console.warn("Không thể tự động đọc API Key từ Sheets:", err);
+                status.textContent = "Lỗi kết nối Key";
+                status.className = "text-xs font-medium px-2.5 py-1 rounded-full bg-rose-100 text-rose-700";
+                showToast("Không đọc được cấu hình API Key từ Google Sheets!", "error");
             }
         };
-
         function switchTab(tab) {
             document.getElementById("tabApp").classList.add("hidden");
             document.getElementById("tabHistory").classList.add("hidden");
