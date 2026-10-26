@@ -273,87 +273,61 @@
                 uploadPlaceholder.style.display = "none";
             }
         }
-      async function processAIAndSave(base64Img) {
-            const status = document.getElementById("ocrStatus");
-            const btnExtract = document.getElementById("btnExtract");
 
-            status.textContent = "AI đang đọc chữ...";
-            status.className = "text-xs font-medium px-2.5 py-1 rounded-full bg-amber-100 text-amber-700";
-            btnExtract.disabled = true;
-            btnExtract.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Đang xử lý...`;
+    async function processAIAndSave(base64Img) {
+    const status = document.getElementById("ocrStatus");
+    const btnExtract = document.getElementById("btnExtract");
 
-            try {
-                const GEMINI_API_KEY = "AQ.Ab8RN6ISKWfiCSTBEvMXGT6u-NGQclTNZjIoy8fKC2cTrwd0fA";
-                const cleanBase64 = base64Img.split(',')[1] || base64Img;
-               // Đổi từ gemini-1.5-flash sang model chuẩn v1beta
-               const aiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent?key=" + GEMINI_API_KEY;
+    status.textContent = "AI đang đọc chữ...";
+    status.className = "text-xs font-medium px-2.5 py-1 rounded-full bg-amber-100 text-amber-700";
+    btnExtract.disabled = true;
+    btnExtract.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Đang xử lý...`;
 
-                const aiPayload = {
-                    "contents": [{
-                        "parts": [
-                            { "text": "Hãy đọc và trích xuất thông tin người nhận trên bì thư này. Chỉ trả về ĐÚNG định dạng JSON thuần túy (không kèm markdown ```json) với các key chính xác: \"name\" (Họ và tên), \"dob\" (Ngày sinh nếu có), \"address\" (Địa chỉ đầy đủ), \"phone\" (Số điện thoại)." },
-                            { "inlineData": { "mimeType": "image/jpeg", "data": cleanBase64 } }
-                        ]
-                    }],
-                    "generationConfig": {
-                        "responseMimeType": "application/json"
-                    }
-                };
+    try {
+        // Gửi ảnh Base64 lên Google Apps Script để xử lý OCR và lưu Sheet luôn
+        const response = await fetch(DEFAULT_SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({ imageBase64: base64Img })
+        });
 
-                const aiResponse = await fetch(aiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(aiPayload)
-                });
+        const result = await response.json();
 
-                const aiJson = await aiResponse.json();
-                
-                // In toàn bộ phản hồi từ AI ra Console để kiểm tra trực quan
-                console.log("RAW AI Response:", aiJson);
+        if (result.result === "success" && result.data) {
+            const parsedData = result.data;
 
-                if (aiJson.error) {
-                    throw new Error(aiJson.error.message || "Lỗi từ Google API");
-                }
+            // Điền dữ liệu ra form web
+            document.getElementById("recipientName").value = parsedData.hoTen || "";
+            document.getElementById("recipientDob").value = parsedData.ngaySinh || "";
+            document.getElementById("recipientAddress").value = parsedData.diaChi || "";
+            document.getElementById("recipientPhone").value = parsedData.sdt || "";
 
-                if (!aiJson.candidates || aiJson.candidates.length === 0) {
-                    throw new Error("Không có candidates trả về từ AI");
-                }
+            status.textContent = "Quét thành công";
+            status.className = "text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700";
+            showToast("Đã nhận diện và lưu vào Google Sheets!", "success");
 
-                const textResult = aiJson.candidates[0].content.parts[0].text;
-                const cleanedText = textResult.replace(/```json/g, "").replace(/```/g, "").trim();
-                const parsedData = JSON.parse(cleanedText);
-
-                // Điền dữ liệu ra form web
-                document.getElementById("recipientName").value = parsedData.name || "";
-                document.getElementById("recipientDob").value = parsedData.dob || "";
-                document.getElementById("recipientAddress").value = parsedData.address || "";
-                document.getElementById("recipientPhone").value = parsedData.phone || "";
-
-                status.textContent = "Quét thành công";
-                status.className = "text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700";
-                showToast("Đã nhận diện thành công!", "success");
-
-                // Đẩy dữ liệu lên Google Sheets
-                await fetch(DEFAULT_SCRIPT_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        hoTen: parsedData.name || "",
-                        ngaySinh: parsedData.dob || "",
-                        address: parsedData.address || "",
-                        sdt: parsedData.phone || ""
-                    })
-                });
-
-            } catch (err) {
-                console.error("Chi tiết lỗi AI:", err);
-                showToast("Lỗi: " + err.message, "error");
-                status.textContent = "Lỗi nhận dạng";
-                status.className = "text-xs font-medium px-2.5 py-1 rounded-full bg-rose-100 text-rose-700";
-            } finally {
-                btnExtract.disabled = false;
-                btnExtract.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i> Nhận diện AI lại`;
-            }
+            // Lưu vào lịch sử hiển thị trên web
+            saveToHistory({
+                timestamp: new Date().toLocaleString("vi-VN"),
+                name: parsedData.hoTen || "",
+                dob: parsedData.ngaySinh || "",
+                address: parsedData.diaChi || "",
+                phone: parsedData.sdt || "",
+                status: "Đã lưu Sheet"
+            });
+        } else {
+            throw new Error(result.message || "Không thể phân tích dữ liệu từ AI");
         }
+
+    } catch (err) {
+        console.error("Chi tiết lỗi:", err);
+        showToast("Lỗi: " + err.message, "error");
+        status.textContent = "Lỗi nhận dạng";
+        status.className = "text-xs font-medium px-2.5 py-1 rounded-full bg-rose-100 text-rose-700";
+    } finally {
+        btnExtract.disabled = false;
+        btnExtract.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i> Nhận diện AI lại`;
+    }
+}
         
         function manualOCRProcess() {
             if (!currentBase64Image) {
