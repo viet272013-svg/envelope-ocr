@@ -42,9 +42,6 @@
                 <button id="tabHistoryBtn" onclick="switchTab('history')" class="px-4 py-2 rounded-lg text-indigo-100 hover:text-white transition-all duration-200 flex items-center gap-2">
                     <i class="fa-solid fa-list-check"></i> Lịch sử
                 </button>
-                <button id="tabGuideBtn" onclick="switchTab('guide')" class="px-4 py-2 rounded-lg text-indigo-100 hover:text-white transition-all duration-200 flex items-center gap-2">
-                    <i class="fa-solid fa-code"></i> Mã Apps Script
-                </button>
             </div>
         </div>
     </header>
@@ -54,27 +51,23 @@
 
         <!-- TAB 1: APP / SCAN & EDIT -->
         <div id="tabApp" class="space-y-6">
-            
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-                <!-- Left Side: Image Upload & OCR Action (5 Cols) -->
+                <!-- Left Side: Image Upload & OCR Action -->
                 <div class="lg:col-span-5 space-y-4">
                     <div class="glass-card rounded-2xl p-5 shadow-sm space-y-4">
                         <h2 class="text-base font-semibold text-slate-800 flex items-center gap-2">
                             <i class="fa-solid fa-image text-indigo-600"></i> Ảnh bì thư người nhận
                         </h2>
 
-                        <!-- Khung xem trước ảnh và điều khiển chọn/chụp ảnh -->
+                        <!-- Khung xem trước ảnh và chọn/chụp -->
                         <div class="border-2 border-dashed border-indigo-200 bg-indigo-50/50 rounded-xl p-3 text-center relative overflow-hidden flex flex-col justify-center items-center">
                             
-                            <!-- Input ẩn nhận file từ máy tính và camera -->
                             <input type="file" id="imageInput" accept="image/*" onchange="handleFileSelect(event)" style="display:none;">
                             <input type="file" id="cameraInput" accept="image/*" capture="environment" onchange="handleFileSelect(event)" style="display:none;">
 
-                            <!-- Thẻ hiển thị ảnh xem trước -->
                             <img id="imagePreview" src="" alt="Bì thư preview" class="max-h-72 rounded-lg object-contain shadow-md mb-2 hidden" />
 
-                            <!-- Giao diện hướng dẫn ban đầu -->
                             <div id="uploadPlaceholder" class="space-y-3 py-6 w-full">
                                 <div class="w-14 h-14 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto text-2xl">
                                     <i class="fa-solid fa-camera-retro"></i>
@@ -85,7 +78,6 @@
                                 </div>
                             </div>
 
-                            <!-- Nút chọn nhanh luôn hiển thị dưới khung -->
                             <div class="flex gap-2 justify-center w-full pt-2 border-t border-slate-200/60">
                                 <button type="button" onclick="document.getElementById('cameraInput').click()" class="flex-1 py-2 px-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow transition flex items-center justify-center gap-1.5 cursor-pointer">
                                     <i class="fa-solid fa-camera"></i> Chụp ảnh mới
@@ -96,14 +88,14 @@
                             </div>
                         </div>
 
-                        <!-- Action Buttons: Nhận diện AI thủ công -->
+                        <!-- Action Button -->
                         <button type="button" id="btnExtract" onclick="manualOCRProcess()" class="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold shadow-md shadow-indigo-200 transition flex items-center justify-center gap-2">
                             <i class="fa-solid fa-wand-magic-sparkles"></i> Nhận diện AI lại
                         </button>
                     </div>
                 </div>
 
-                <!-- Right Side: Edit Form (7 Cols) -->
+                <!-- Right Side: Edit Form -->
                 <div class="lg:col-span-7">
                     <div class="glass-card rounded-2xl p-6 shadow-sm space-y-5">
                         <div class="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -114,7 +106,6 @@
                         </div>
 
                         <form id="envelopeForm" class="space-y-4" onsubmit="event.preventDefault(); manualSubmit();">
-                            <!-- Họ và tên -->
                             <div>
                                 <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Họ và tên người nhận</label>
                                 <div class="relative">
@@ -126,7 +117,6 @@
                                 </div>
                             </div>
 
-                            <!-- Ngày sinh -->
                             <div>
                                 <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Ngày sinh (SN)</label>
                                 <div class="relative">
@@ -138,7 +128,6 @@
                                 </div>
                             </div>
 
-                            <!-- Địa chỉ -->
                             <div>
                                 <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Địa chỉ chi tiết</label>
                                 <div class="relative">
@@ -150,7 +139,6 @@
                                 </div>
                             </div>
 
-                            <!-- Số điện thoại -->
                             <div>
                                 <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Số điện thoại</label>
                                 <div class="relative">
@@ -162,16 +150,14 @@
                                 </div>
                             </div>
 
-                            <!-- Submit Button -->
                             <div class="pt-2">
                                 <button type="submit" id="btnSubmit" class="w-full py-3 px-6 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-base font-semibold shadow-lg shadow-emerald-200 transition flex items-center justify-center gap-2">
-                                    <i class="fa-solid fa-paper-plane"></i> Lưu cập nhật / Lưu thủ công vào Sheet
+                                    <i class="fa-solid fa-paper-plane"></i> Lưu vào Google Sheets
                                 </button>
                             </div>
                         </form>
                     </div>
                 </div>
-
             </div>
         </div>
 
@@ -200,35 +186,9 @@
                             </tr>
                         </thead>
                         <tbody id="historyTableBody" class="divide-y divide-slate-100">
-                            <!-- Rows loaded via JS -->
+                            <!-- Dynamically generated -->
                         </tbody>
                     </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- TAB 3: GOOGLE APPS SCRIPT CODE & GUIDE -->
-        <div id="tabGuide" class="hidden space-y-6">
-            <div class="glass-card rounded-2xl p-6 shadow-sm space-y-4">
-                <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
-                    <i class="fa-brands fa-google text-emerald-600"></i> Hướng dẫn kết nối Google Sheets (Google Apps Script)
-                </h2>
-                
-                <ol class="list-decimal list-inside space-y-2 text-sm text-slate-600 leading-relaxed">
-                    <li>Mở file <b>Google Sheets</b> mà bạn muốn lưu dữ liệu.</li>
-                    <li>Ở thanh menu trên cùng, chọn <b>Tiện ích mở rộng (Extensions)</b> &gt; <b>Apps Script</b>.</li>
-                    <li>Xóa toàn bộ mã cũ và dán đoạn mã Apps Script bảo mật tích hợp Gemini vào.</li>
-                    <li>Nhấn nút <b>Triển khai (Deploy)</b> &gt; Chọn <b>Quản lý triển khai (Manage deployments)</b> &gt; Cập nhật phiên bản mới nhất.</li>
-                </ol>
-
-                <div class="relative">
-                    <button onclick="copyCode()" class="absolute top-3 right-3 px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-medium hover:bg-indigo-700 transition flex items-center gap-1">
-                        <i class="fa-regular fa-copy"></i> Sao chép Mã
-                    </button>
-                    <pre class="bg-slate-900 text-indigo-300 p-4 rounded-xl text-xs overflow-x-auto font-mono leading-relaxed" id="scriptCode">
-// Code Apps Script đã tích hợp Gemini API Key an toàn ở phía Google Sheets
-// Không bị lộ key trên Github công khai.
-                    </pre>
                 </div>
             </div>
         </div>
@@ -244,22 +204,32 @@
     <!-- JS Logic -->
     <script>
         let currentBase64Image = null;
+        let cachedApiKey = "";
         
-        // 👉 ĐÃ CỐ ĐỊNH URL GOOGLE SHEETS CỦA BẠN TẠI ĐÂY
+        // 👉 ĐƯỜNG LINK GOOGLE APPS SCRIPT CỦA BẠN
         const DEFAULT_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyS9lBJMVnci4t10iKYhpZ6tFMCQOynU4xccQBPcEfKiWWg1BI4gbSEm1t7ZBAbXyLn/exec";
 
-        window.onload = function() {
+        // Tự động đọc API Key từ ô A1 Sheet Config khi vừa mở trang
+        window.onload = async function() {
             renderHistory();
+            try {
+                const res = await fetch(DEFAULT_SCRIPT_URL);
+                const data = await res.json();
+                if (data.result === "success" && data.apiKey) {
+                    cachedApiKey = data.apiKey;
+                    console.log("Đã nạp thành công API Key từ Google Sheets.");
+                }
+            } catch (err) {
+                console.warn("Không thể tự động đọc API Key từ Sheets:", err);
+            }
         };
 
         function switchTab(tab) {
             document.getElementById("tabApp").classList.add("hidden");
             document.getElementById("tabHistory").classList.add("hidden");
-            document.getElementById("tabGuide").classList.add("hidden");
 
             document.getElementById("tabAppBtn").className = "px-4 py-2 rounded-lg text-indigo-100 hover:text-white transition-all flex items-center gap-2";
             document.getElementById("tabHistoryBtn").className = "px-4 py-2 rounded-lg text-indigo-100 hover:text-white transition-all flex items-center gap-2";
-            document.getElementById("tabGuideBtn").className = "px-4 py-2 rounded-lg text-indigo-100 hover:text-white transition-all flex items-center gap-2";
 
             if (tab === 'app') {
                 document.getElementById("tabApp").classList.remove("hidden");
@@ -268,13 +238,10 @@
                 document.getElementById("tabHistory").classList.remove("hidden");
                 document.getElementById("tabHistoryBtn").className = "px-4 py-2 rounded-lg bg-white text-indigo-600 shadow-sm transition-all flex items-center gap-2";
                 renderHistory();
-            } else if (tab === 'guide') {
-                document.getElementById("tabGuide").classList.remove("hidden");
-                document.getElementById("tabGuideBtn").className = "px-4 py-2 rounded-lg bg-white text-indigo-600 shadow-sm transition-all flex items-center gap-2";
             }
         }
 
-        // Xử lý khi chọn ảnh hoặc chụp ảnh xong -> Nén ảnh nhỏ lại trước khi gửi để siêu tốc
+        // Tự động nén ảnh chụp xuống 800px để xử lý nhanh và nhẹ
         function handleFileSelect(event) {
             const file = event.target.files[0];
             if (file) {
@@ -283,9 +250,8 @@
                     const img = new Image();
                     img.src = e.target.result;
                     img.onload = function() {
-                        // Tạo canvas để thu nhỏ ảnh về chiều rộng tối đa 1000px giúp giảm dung lượng
                         const canvas = document.createElement('canvas');
-                        const MAX_WIDTH = 1000;
+                        const MAX_WIDTH = 800;
                         let width = img.width;
                         let height = img.height;
                         
@@ -299,20 +265,17 @@
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, width, height);
                         
-                        // Lấy ảnh đã nén dưới dạng base64 (chất lượng 0.8)
-                        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
-                        
+                        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
                         currentBase64Image = compressedBase64;
                         showImagePreview(compressedBase64);
                         
-                        // Gửi ảnh đã nén lên Google Apps Script
-                        processAIAndSave(compressedBase64);
+                        processOCRWithAI(compressedBase64);
                     }
                 };
                 reader.readAsDataURL(file);
             }
         }
-        
+
         function showImagePreview(src) {
             const imgPreview = document.getElementById("imagePreview");
             const uploadPlaceholder = document.getElementById("uploadPlaceholder");
@@ -324,53 +287,61 @@
             }
         }
 
-        // Hàm gửi ảnh lên Google Apps Script để AI xử lý tự động
-        async function processAIAndSave(base64Img) {
-            const scriptUrl = DEFAULT_SCRIPT_URL;
+        // Trích xuất AI trực tiếp từ trình duyệt bằng Key an toàn
+        async function processOCRWithAI(base64Img) {
+            if (!cachedApiKey) {
+                showToast("Đang nạp API Key từ Google Sheets, vui lòng thử lại sau 2 giây!", "warning");
+                return;
+            }
+
             const status = document.getElementById("ocrStatus");
             const btnExtract = document.getElementById("btnExtract");
 
-            status.textContent = "Đang xử lý AI & Lưu Sheets...";
+            status.textContent = "Đang xử lý AI...";
             status.className = "text-xs font-medium px-2.5 py-1 rounded-full bg-amber-100 text-amber-700";
             btnExtract.disabled = true;
-            btnExtract.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Đang xử lý tự động...`;
+            btnExtract.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Đang đọc chữ...`;
 
             try {
-                const response = await fetch(scriptUrl, {
+                const base64Data = base64Img.split(',')[1];
+                const prompt = "Hãy đọc và trích xuất thông tin người nhận trên bì thư. Trả về định dạng JSON thuần túy gồm các key: name (Họ và tên), dob (Ngày sinh nếu có, định dạng DD/MM/YYYY), address (Địa chỉ đầy đủ), phone (Số điện thoại).";
+
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${cachedApiKey}`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // Dùng text/plain để tránh lỗi CORS khi giao tiếp với Apps Script
-                    body: JSON.stringify({ imageBase64: base64Img })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [
+                                { text: prompt },
+                                { inlineData: { mimeType: "image/jpeg", data: base64Data } }
+                            ]
+                        }],
+                        generationConfig: {
+                            responseMimeType: "application/json"
+                        }
+                    })
                 });
 
                 const result = await response.json();
+                const textResult = result?.candidates?.[0]?.content?.parts?.[0]?.text;
                 
-                if (result.result === "success" && result.data) {
-                    // Điền dữ liệu AI trả về vào các ô input để nhân viên có thể kiểm tra/chỉnh sửa nếu cần
-                    document.getElementById("recipientName").value = result.data.hoTen || "";
-                    document.getElementById("recipientDob").value = result.data.ngaySinh || "";
-                    document.getElementById("recipientAddress").value = result.data.diaChi || "";
-                    document.getElementById("recipientPhone").value = result.data.sdt || "";
-
-                    status.textContent = "Thành công (Đã lên Google Sheets)";
+                if (textResult) {
+                    const parsed = JSON.parse(textResult);
+                    document.getElementById("recipientName").value = parsed.name || "";
+                    document.getElementById("recipientDob").value = parsed.dob || "";
+                    document.getElementById("recipientAddress").value = parsed.address || "";
+                    document.getElementById("recipientPhone").value = parsed.phone || "";
+                    
+                    status.textContent = "AI đọc thành công";
                     status.className = "text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700";
-                    showToast("Đã quét AI và lưu thẳng vào Google Sheets!", "success");
-
-                    // Lưu lịch sử cục bộ
-                    saveToHistory({
-                        timestamp: new Date().toLocaleString("vi-VN"),
-                        name: result.data.hoTen,
-                        dob: result.data.ngaySinh,
-                        address: result.data.diaChi,
-                        phone: result.data.sdt,
-                        status: "Đã gửi Google Sheets"
-                    });
+                    showToast("Đã trích xuất thông tin thành công!", "success");
                 } else {
-                    throw new Error("Không trích xuất được dữ liệu");
+                    throw new Error("Không trích xuất được text từ AI");
                 }
-            } catch (err) {
-                console.error("Lỗi:", err);
-                showToast("Lỗi kết nối hoặc xử lý AI!", "error");
-                status.textContent = "Lỗi xử lý";
+            } catch (error) {
+                console.error("Lỗi AI:", error);
+                showToast("Không đọc được ảnh, vui lòng bấm nhận diện lại.", "error");
+                status.textContent = "Lỗi đọc AI";
                 status.className = "text-xs font-medium px-2.5 py-1 rounded-full bg-rose-100 text-rose-700";
             } finally {
                 btnExtract.disabled = false;
@@ -378,16 +349,15 @@
             }
         }
 
-        // Nút bấm "Nhận diện AI lại" thủ công nếu cần gửi lại ảnh hiện tại
         function manualOCRProcess() {
             if (!currentBase64Image) {
-                showToast("Vui lòng chụp ảnh bì thư trước!", "warning");
+                showToast("Vui lòng chụp ảnh trước!", "warning");
                 return;
             }
-            processAIAndSave(currentBase64Image);
+            processOCRWithAI(currentBase64Image);
         }
 
-        // Nút lưu thủ công nếu nhân viên có chỉnh sửa lại thông tin bằng tay trên form
+        // Lưu dữ liệu vào Google Sheets sau khi nhân viên đã kiểm tra
         async function manualSubmit() {
             const scriptUrl = DEFAULT_SCRIPT_URL;
             const hoTen = document.getElementById("recipientName").value.trim();
@@ -403,30 +373,43 @@
             const payload = { hoTen, ngaySinh, diaChi, sdt };
             const btnSubmit = document.getElementById("btnSubmit");
             btnSubmit.disabled = true;
-            btnSubmit.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Đang cập nhật lên Sheet...`;
+            btnSubmit.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Đang lưu vào Google Sheets...`;
 
             try {
                 await fetch(scriptUrl, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
 
-                showToast("Đã cập nhật thông tin lên Google Sheets thành công!", "success");
+                showToast("Đã lưu vào Google Sheets thành công!", "success");
                 saveToHistory({
                     timestamp: new Date().toLocaleString("vi-VN"),
                     name: hoTen,
                     dob: ngaySinh,
                     address: diaChi,
                     phone: sdt,
-                    status: "Đã cập nhật Sheet"
+                    status: "Đã gửi Google Sheets"
                 });
+
+                // Reset form để sẵn sàng chụp bì thư tiếp theo
+                document.getElementById("recipientName").value = "";
+                document.getElementById("recipientDob").value = "";
+                document.getElementById("recipientAddress").value = "";
+                document.getElementById("recipientPhone").value = "";
+                document.getElementById("imagePreview").classList.add("hidden");
+                document.getElementById("uploadPlaceholder").style.display = "block";
+                currentBase64Image = null;
+                document.getElementById("ocrStatus").textContent = "Chờ dữ liệu";
+                document.getElementById("ocrStatus").className = "text-xs font-medium px-2.5 py-1 rounded-full bg-slate-100 text-slate-600";
+
             } catch (err) {
                 console.error("Gửi thất bại:", err);
-                showToast("Không thể gửi dữ liệu cập nhật.", "error");
+                showToast("Không thể gửi đến Google Sheets.", "error");
             } finally {
                 btnSubmit.disabled = false;
-                btnSubmit.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Lưu cập nhật / Lưu thủ công vào Sheet`;
+                btnSubmit.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Lưu vào Google Sheets`;
             }
         }
 
@@ -473,10 +456,6 @@
                 renderHistory();
                 showToast("Đã xóa lịch sử!", "info");
             }
-        }
-
-        function copyCode() {
-            showToast("Đã sao chép!", "success");
         }
 
         function showToast(msg, type = "info") {
