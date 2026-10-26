@@ -4,26 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trích Xuất Bì Thư & Lưu Google Sheets</title>
-    <!-- Thay thế Tailwind CDN bằng CSS cơ bản để giao diện không bao giờ bị vỡ -->
-    <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #1e293b; margin: 0; padding: 0; }
-        header { background-color: #4f46e5; color: white; padding: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-        .glass-card { background: #ffffff; border-radius: 16px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; margin-bottom: 20px; }
-        input, textarea { width: 100%; padding: 10px 12px; margin-top: 5px; margin-bottom: 15px; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
-        button { cursor: pointer; padding: 10px 16px; border-radius: 8px; font-weight: 600; border: none; transition: background 0.2s; }
-        .btn-primary { background-color: #4f46e5; color: white; width: 100%; }
-        .btn-primary:hover { background-color: #4338ca; }
-        .btn-success { background-color: #059669; color: white; width: 100%; }
-        .btn-success:hover { background-color: #047857; }
-        .hidden { display: none !important; }
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        @media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } }
-    </style>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Font Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(229, 231, 235, 0.8);
+        }
+    </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
 
@@ -67,10 +61,10 @@
                         </h2>
 
                         <!-- Khung xem trước ảnh và chọn/chụp -->
-                        <div class="border-2 border-dashed border-indigo-200 bg-indigo-50/50 rounded-xl p-3 text-center relative overflow-hidden flex flex-col justify-center items-center min-h-[220px]">
+                        <div class="border-2 border-dashed border-indigo-200 bg-indigo-50/50 rounded-xl p-3 text-center relative overflow-hidden flex flex-col justify-center items-center">
                             
-                            <input type="file" id="imageInput" accept="image/*" onchange="handleFileSelect(event)" class="hidden">
-                            <input type="file" id="cameraInput" accept="image/*" capture="environment" onchange="handleFileSelect(event)" class="hidden">
+                            <input type="file" id="imageInput" accept="image/*" onchange="handleFileSelect(event)" style="display:none;">
+                            <input type="file" id="cameraInput" accept="image/*" capture="environment" onchange="handleFileSelect(event)" style="display:none;">
 
                             <img id="imagePreview" src="" alt="Bì thư preview" class="max-h-72 rounded-lg object-contain shadow-md mb-2 hidden" />
 
@@ -118,7 +112,7 @@
                                     <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
                                         <i class="fa-solid fa-user"></i>
                                     </span>
-                                    <input type="text" id="recipientName" required placeholder="Ví dụ: Nguyễn Văn A" 
+                                    <input type="text" id="recipientName" required placeholder="Ví dụ: Nguyễn Minh Nguyệt" 
                                         class="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
                                 </div>
                             </div>
@@ -129,7 +123,7 @@
                                     <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
                                         <i class="fa-solid fa-cake-candles"></i>
                                     </span>
-                                    <input type="text" id="recipientDob" placeholder="Ví dụ: 14/07/1990" 
+                                    <input type="text" id="recipientDob" placeholder="Ví dụ: 14/07/2012" 
                                         class="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
                                 </div>
                             </div>
@@ -140,7 +134,7 @@
                                     <span class="absolute inset-y-0 left-0 pl-3 pt-3 text-slate-400">
                                         <i class="fa-solid fa-location-dot"></i>
                                     </span>
-                                    <textarea id="recipientAddress" rows="3" placeholder="Ví dụ: Số 10 Ngõ 5 TDP Phú Lương, Hà Đông" 
+                                    <textarea id="recipientAddress" rows="3" placeholder="Ví dụ: Số nhà 7 Ngõ 18/Ngách 4 TDP Thượng Mão - Phú Lương" 
                                         class="w-full pl-10 pr-4 py-2 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"></textarea>
                                 </div>
                             </div>
@@ -151,7 +145,7 @@
                                     <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
                                         <i class="fa-solid fa-phone"></i>
                                     </span>
-                                    <input type="tel" id="recipientPhone" placeholder="Ví dụ: 0984729099" 
+                                    <input type="tel" id="recipientPhone" placeholder="Ví dụ: 0365424882" 
                                         class="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
                                 </div>
                             </div>
@@ -210,10 +204,9 @@
     <!-- JS Logic -->
     <script>
         let currentBase64Image = null;
-        // Đường dẫn Google Apps Script Web App của bạn
         const DEFAULT_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzFDQeY6mqrUUj7p9hq9M-MAnxgvIC43gq6eSlLdz_XWdwg2sVqSQ6AxyMkUjEgbq39/exec";
 
-        window.onload = function() {
+       window.onload = function() {
             renderHistory();
             document.getElementById("ocrStatus").textContent = "Sẵn sàng quét AI";
             document.getElementById("ocrStatus").className = "text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700";
@@ -244,9 +237,8 @@
                     const img = new Image();
                     img.src = e.target.result;
                     img.onload = function() {
-                        // Nén ảnh tự động để truyền mượt mà
                         const canvas = document.createElement('canvas');
-                        const MAX_WIDTH = 1000;
+                        const MAX_WIDTH = 800;
                         let width = img.width;
                         let height = img.height;
                         
@@ -260,11 +252,10 @@
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, width, height);
                         
-                        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
                         currentBase64Image = compressedBase64;
                         showImagePreview(compressedBase64);
                         
-                        // Tự động gọi AI bóc tách thông tin
                         processAIAndSave(compressedBase64);
                     }
                 };
@@ -282,57 +273,80 @@
                 uploadPlaceholder.style.display = "none";
             }
         }
-
-        async function processAIAndSave(base64Img) {
+      async function processAIAndSave(base64Img) {
             const status = document.getElementById("ocrStatus");
             const btnExtract = document.getElementById("btnExtract");
 
-            status.textContent = "AI đang đọc chữ (khoảng 5 giây)...";
+            status.textContent = "AI đang đọc chữ...";
             status.className = "text-xs font-medium px-2.5 py-1 rounded-full bg-amber-100 text-amber-700";
             btnExtract.disabled = true;
-            btnExtract.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Đang đọc chữ...`;
-
-            // Reset nội dung form trước khi đọc ảnh mới
-            document.getElementById("recipientName").value = "";
-            document.getElementById("recipientDob").value = "";
-            document.getElementById("recipientAddress").value = "";
-            document.getElementById("recipientPhone").value = "";
+            btnExtract.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Đang xử lý...`;
 
             try {
-                // Gửi ảnh sang Google Apps Script để gọi AI
-                const response = await fetch(DEFAULT_SCRIPT_URL, {
+                const GEMINI_API_KEY = "AQ.Ab8RN6ISKWfiCSTBEvMXGT6u-NGQclTNZjIoy8fKC2cTrwd0fA";
+                const cleanBase64 = base64Img.split(',')[1] || base64Img;
+               // Đổi từ gemini-1.5-flash sang model chuẩn v1beta
+               const aiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent?key=" + GEMINI_API_KEY;
+
+                const aiPayload = {
+                    "contents": [{
+                        "parts": [
+                            { "text": "Hãy đọc và trích xuất thông tin người nhận trên bì thư này. Chỉ trả về ĐÚNG định dạng JSON thuần túy (không kèm markdown ```json) với các key chính xác: \"name\" (Họ và tên), \"dob\" (Ngày sinh nếu có), \"address\" (Địa chỉ đầy đủ), \"phone\" (Số điện thoại)." },
+                            { "inlineData": { "mimeType": "image/jpeg", "data": cleanBase64 } }
+                        ]
+                    }],
+                    "generationConfig": {
+                        "responseMimeType": "application/json"
+                    }
+                };
+
+                const aiResponse = await fetch(aiUrl, {
                     method: 'POST',
-                    body: JSON.stringify({ imageBase64: base64Img })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(aiPayload)
                 });
 
-                const rawText = await response.text();
-                const result = JSON.parse(rawText);
+                const aiJson = await aiResponse.json();
+                
+                // In toàn bộ phản hồi từ AI ra Console để kiểm tra trực quan
+                console.log("RAW AI Response:", aiJson);
 
-                if (result.result === "success" && result.data && (result.data.hoTen || result.data.diaChi || result.data.sdt)) {
-                    // Điền thông tin thật do AI bóc tách được từ ảnh
-                    document.getElementById("recipientName").value = result.data.hoTen || "";
-                    document.getElementById("recipientDob").value = result.data.ngaySinh || "";
-                    document.getElementById("recipientAddress").value = result.data.diaChi || "";
-                    document.getElementById("recipientPhone").value = result.data.sdt || "";
-
-                    status.textContent = "Quét & Lưu thành công";
-                    status.className = "text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700";
-                    showToast("Trích xuất và lưu Google Sheets thành công!", "success");
-
-                    saveToHistory({
-                        timestamp: new Date().toLocaleString("vi-VN"),
-                        name: result.data.hoTen,
-                        dob: result.data.ngaySinh,
-                        address: result.data.diaChi,
-                        phone: result.data.sdt,
-                        status: "Đã lưu Google Sheets"
-                    });
-                } else {
-                    throw new Error("AI không đọc được thông tin từ ảnh này");
+                if (aiJson.error) {
+                    throw new Error(aiJson.error.message || "Lỗi từ Google API");
                 }
+
+                if (!aiJson.candidates || aiJson.candidates.length === 0) {
+                    throw new Error("Không có candidates trả về từ AI");
+                }
+
+                const textResult = aiJson.candidates[0].content.parts[0].text;
+                const cleanedText = textResult.replace(/```json/g, "").replace(/```/g, "").trim();
+                const parsedData = JSON.parse(cleanedText);
+
+                // Điền dữ liệu ra form web
+                document.getElementById("recipientName").value = parsedData.name || "";
+                document.getElementById("recipientDob").value = parsedData.dob || "";
+                document.getElementById("recipientAddress").value = parsedData.address || "";
+                document.getElementById("recipientPhone").value = parsedData.phone || "";
+
+                status.textContent = "Quét thành công";
+                status.className = "text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700";
+                showToast("Đã nhận diện thành công!", "success");
+
+                // Đẩy dữ liệu lên Google Sheets
+                await fetch(DEFAULT_SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        hoTen: parsedData.name || "",
+                        ngaySinh: parsedData.dob || "",
+                        address: parsedData.address || "",
+                        sdt: parsedData.phone || ""
+                    })
+                });
+
             } catch (err) {
-                console.error("Lỗi:", err);
-                showToast("Không đọc được chữ từ ảnh, vui lòng chụp rõ hơn!", "error");
+                console.error("Chi tiết lỗi AI:", err);
+                showToast("Lỗi: " + err.message, "error");
                 status.textContent = "Lỗi nhận dạng";
                 status.className = "text-xs font-medium px-2.5 py-1 rounded-full bg-rose-100 text-rose-700";
             } finally {
@@ -340,16 +354,17 @@
                 btnExtract.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i> Nhận diện AI lại`;
             }
         }
-
+        
         function manualOCRProcess() {
             if (!currentBase64Image) {
-                showToast("Vui lòng chụp hoặc chọn ảnh bì thư trước!", "warning");
+                showToast("Vui lòng chụp ảnh bì thư trước!", "warning");
                 return;
             }
             processAIAndSave(currentBase64Image);
         }
 
         async function manualSubmit() {
+            const scriptUrl = DEFAULT_SCRIPT_URL;
             const hoTen = document.getElementById("recipientName").value.trim();
             const ngaySinh = document.getElementById("recipientDob").value.trim();
             const diaChi = document.getElementById("recipientAddress").value.trim();
@@ -360,32 +375,32 @@
                 return;
             }
 
-            const payload = { hoTen, ngaySinh, address: diaChi, sdt };
+            const payload = { hoTen, ngaySinh, diaChi, sdt };
             const btnSubmit = document.getElementById("btnSubmit");
             btnSubmit.disabled = true;
             btnSubmit.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Đang cập nhật lên Sheet...`;
 
             try {
-                await fetch(DEFAULT_SCRIPT_URL, {
+                await fetch(scriptUrl, {
                     method: 'POST',
                     body: JSON.stringify(payload)
                 });
 
-                showToast("Đã cập nhật thông tin lên Google Sheets!", "success");
+                showToast("Đã cập nhật thông tin lên Google Sheets thành công!", "success");
                 saveToHistory({
                     timestamp: new Date().toLocaleString("vi-VN"),
                     name: hoTen,
                     dob: ngaySinh,
                     address: diaChi,
                     phone: sdt,
-                    status: "Đã chỉnh sửa & lưu"
+                    status: "Đã cập nhật Sheet"
                 });
             } catch (err) {
                 console.error("Gửi thất bại:", err);
                 showToast("Không thể gửi dữ liệu cập nhật.", "error");
             } finally {
                 btnSubmit.disabled = false;
-                btnSubmit.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Lưu vào Google Sheets`;
+                btnSubmit.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Lưu cập nhật / Lưu thủ công vào Sheet`;
             }
         }
 
@@ -412,7 +427,7 @@
                 tr.className = "hover:bg-slate-50 transition";
                 tr.innerHTML = `
                     <td class="p-3 whitespace-nowrap text-xs text-slate-400">${item.timestamp}</td>
-                    <td class="p-3 font-semibold text-slate-800">${item.name || '-'}</td>
+                    <td class="p-3 font-semibold text-slate-800">${item.name}</td>
                     <td class="p-3">${item.dob || '-'}</td>
                     <td class="p-3 font-mono">${item.phone || '-'}</td>
                     <td class="p-3 text-xs max-w-xs truncate">${item.address || '-'}</td>
@@ -457,5 +472,6 @@
             }, 3000);
         }
     </script>
+    
 </body>
 </html>
