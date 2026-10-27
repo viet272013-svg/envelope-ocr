@@ -204,7 +204,7 @@
     <!-- JS Logic -->
     <script>
         let currentBase64Image = null;
-        const DEFAULT_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwJ8csexvDWU9KnKQINGx8Jk7uG0xXtDEoVyYyxuKaRN1K2MlgRv9Fh9gt9G91ormUrPg/exec";
+        const DEFAULT_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbytoUutDCOabGJUHeK-n6wWhL4G8pqXC9N63nIyDRntiLiVwMYZZaJGY-qIzaemmd6bpQ/exec";
         window.onload = function() {
             renderHistory();
             document.getElementById("ocrStatus").textContent = "Sẵn sàng quét AI";
@@ -237,6 +237,7 @@
                     img.src = e.target.result;
                     img.onload = function() {
                         const canvas = document.createElement('canvas');
+                        // Tối ưu tốc độ: Giới hạn chiều rộng tối đa còn 800px (đủ nét để AI đọc chữ nhưng dung lượng cực nhỏ)
                         const MAX_WIDTH = 800;
                         let width = img.width;
                         let height = img.height;
@@ -251,10 +252,12 @@
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, width, height);
                         
+                        // Nén chất lượng ảnh JPEG xuống 0.6 (60%) giúp giảm tải dung lượng truyền tải qua mạng đi nhiều lần
                         const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
                         currentBase64Image = compressedBase64;
                         showImagePreview(compressedBase64);
                         
+                        // Tự động kích hoạt nhận diện AI với ảnh đã được nén siêu nhẹ
                         processAIAndSave(compressedBase64);
                     }
                 };
